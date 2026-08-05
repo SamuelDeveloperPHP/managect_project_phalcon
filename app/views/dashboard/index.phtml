@@ -1,0 +1,97 @@
+<?php $this->partial('header', ['pageTitle' => $pageTitle, 'csrfToken' => $csrfToken]); ?>
+<?php $this->partial('navbar', ['auth' => $auth]); ?>
+<?php $this->partial('sidebar', ['auth' => $auth, 'csrfToken' => $csrfToken, 'currentPage' => 'dashboard']); ?>
+
+<main class="admin-content">
+    <div class="flash"><?= $this->flashSession->output() ?></div>
+
+    <section class="page-hero">
+        <div>
+            <p class="eyebrow">Visao geral</p>
+            <h1>Ola, <?= htmlspecialchars((string)$auth['name'], ENT_QUOTES, 'UTF-8') ?>.</h1>
+            <p class="muted">Acompanhe os principais modulos administrativos do sistema.</p>
+        </div>
+
+        <?php if (($auth['role'] ?? '') === 'admin'): ?>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="/users">Abrir usuarios</a>
+                <a class="btn btn-secondary" href="/projects">Abrir projetos</a>
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <section class="metric-grid" aria-label="Resumo do painel">
+        <article class="metric-card">
+            <span class="metric-icon blue">U</span>
+            <div>
+                <strong>Usuarios</strong>
+                <p>Cadastro, bloqueio, desbloqueio e perfis de acesso.</p>
+            </div>
+        </article>
+
+        <article class="metric-card">
+            <span class="metric-icon green">O</span>
+            <div>
+                <strong>Online</strong>
+                <p>Presenca dos usuarios atualizada durante a navegacao.</p>
+            </div>
+        </article>
+
+        <article class="metric-card">
+            <span class="metric-icon amber">A</span>
+            <div>
+                <strong>Auditoria</strong>
+                <p>Acoes registradas no MySQL com limpeza automatica apos 90 dias.</p>
+            </div>
+        </article>
+
+        <?php if (($auth['role'] ?? '') === 'admin'): ?>
+            <a class="metric-card metric-link" href="/projects">
+                <span class="metric-icon blue">P</span>
+                <div>
+                    <strong>Projetos</strong>
+                    <p>Cadastro, equipe, anexos e cronograma Gantt por projeto.</p>
+                </div>
+            </a>
+        <?php endif; ?>
+    </section>
+
+    <section class="content-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Sessao ativa</p>
+                    <h2>Dados do usuario</h2>
+                </div>
+            </div>
+
+            <dl class="profile-list">
+                <dt>ID</dt>
+                <dd><?= (int)$auth['id'] ?></dd>
+
+                <dt>E-mail</dt>
+                <dd><?= htmlspecialchars((string)$auth['email'], ENT_QUOTES, 'UTF-8') ?></dd>
+
+                <dt>Perfil</dt>
+                <dd><span class="status-pill status-info"><?= htmlspecialchars((string)$auth['role'], ENT_QUOTES, 'UTF-8') ?></span></dd>
+            </dl>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Proximos passos</p>
+                    <h2>Rotina administrativa</h2>
+                </div>
+            </div>
+
+            <ul class="task-list">
+                <li><span></span> Revisar usuarios bloqueados e ativos.</li>
+                <li><span></span> Conferir auditorias recentes.</li>
+                <li><span></span> Manter perfis de acesso atualizados.</li>
+            </ul>
+        </article>
+    </section>
+</main>
+
+<?php $this->partial('footer'); ?>

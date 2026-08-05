@@ -1,0 +1,92 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phalcon_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      APP_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: phalcon
+      DB_USERNAME: phalcon
+      DB_PASSWORD: phalcon123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - phalcon_network
+
+  mysql:
+    image: mysql:5.7
+    container_name: phalcon_mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: phalcon
+      MYSQL_USER: phalcon
+      MYSQL_PASSWORD: phalcon123
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --sql-mode=
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - phalcon_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: phalcon_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - phalcon_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phalcon_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - phalcon_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  phalcon_network:
+    driver: bridge

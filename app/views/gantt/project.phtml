@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
+    <title><?= htmlspecialchars($pageTitle ?? 'Gantt', ENT_QUOTES, 'UTF-8') ?></title>
+
+    <!-- Gantt original stylesheets - exact same order as jQueryGantt-master/gantt.html -->
+    <link rel="stylesheet" href="/assets/jquery-gantt/platform.css">
+    <link rel="stylesheet" href="/assets/jquery-gantt/libs/jquery/dateField/jquery.dateField.css">
+    <link rel="stylesheet" href="/assets/jquery-gantt/gantt.css">
+    <link rel="stylesheet" href="/assets/jquery-gantt/ganttPrint.css" media="print">
+    <link rel="stylesheet" href="/assets/jquery-gantt/libs/jquery/valueSlider/mb.slider.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Minimal overrides - only layout, nothing visual -->
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        /* Top nav bar - minimal, original-style */
+        #gantt-topbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        #gantt-topbar > * {
+            pointer-events: auto;
+        }
+
+        #gantt-topbar a.btn-projects {
+            font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            color: #2b9af3;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 2px 8px;
+            border: 1px solid #2b9af3;
+            border-radius: 3px;
+            background: #fff;
+        }
+
+        #gantt-topbar a.btn-projects:hover {
+            background: #e8f4ff;
+            text-decoration: none;
+        }
+
+        #gantt-topbar button.btn-save {
+            font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            color: #fff;
+            background: #2b9af3;
+            border: 1px solid #1a7fd4;
+            border-radius: 3px;
+            padding: 2px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #gantt-topbar button.btn-save:hover {
+            background: #1a7fd4;
+        }
+
+        /* Status toast - floating bottom-left, non-intrusive */
+        #gantt-toast {
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            z-index: 9999;
+            max-width: 420px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            color: #617777;
+            background: #E3EDED;
+            border: 1px solid #bbb;
+            display: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        #gantt-toast.info    { background: #d6eeff; border-color: #2b9af3; color: #0c4e8c; }
+        #gantt-toast.success { background: #d4f5e2; border-color: #3aae6c; color: #1a6b3a; }
+        #gantt-toast.error   { background: #ffe0e0; border-color: #e05252; color: #8b1a1a; }
+
+        /* workspace fills viewport */
+        #workSpace {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        /* ganttButtonBar h1 - same as gantt.html inline style */
+        .ganttButtonBar h1 {
+            color: #000000;
+            font-weight: bold;
+            font-size: 28px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body data-project-id="<?= (int)$project->id ?>">
+
+    <!-- Floating top-right navigation -->
+    <div id="gantt-topbar">
+        <a class="btn-projects" href="/projects">Projetos</a>
+        <button class="btn-save" type="button" onclick="saveGanttOnServer()">Salvar cronograma</button>
+    </div>
+
+    <!-- Status toast - floating, non-blocking -->
+    <div id="gantt-toast" role="status" aria-live="polite"></div>
+
+    <!-- Gantt workspace - fills entire viewport exactly like gantt.html -->
+    <div id="workSpace"></div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/jquery.livequery.1.1.1.min.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/jquery.timers.js"></script>
+    <script src="/assets/jquery-gantt/libs/utilities.js"></script>
+    <script src="/assets/jquery-gantt/libs/forms.js"></script>
+    <script src="/assets/jquery-gantt/libs/date.js"></script>
+    <script src="/assets/jquery-gantt/libs/dialogs.js"></script>
+    <script src="/assets/jquery-gantt/libs/layout.js"></script>
+    <script src="/assets/jquery-gantt/libs/i18nJs.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/dateField/jquery.dateField.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/JST/jquery.JST.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/valueSlider/jquery.mb.slider.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/svg/jquery.svg.min.js"></script>
+    <script src="/assets/jquery-gantt/libs/jquery/svg/jquery.svgdom.1.8.js"></script>
+    <script src="/assets/jquery-gantt/ganttUtilities.js"></script>
+    <script src="/assets/jquery-gantt/ganttTask.js"></script>
+    <script src="/assets/jquery-gantt/ganttDrawerSVG.js"></script>
+    <script src="/assets/jquery-gantt/ganttZoom.js?v=pt-BR-2"></script>
+    <script src="/assets/jquery-gantt/ganttGridEditor.js"></script>
+    <script src="/assets/jquery-gantt/ganttMaster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <?= $ganttTemplates ?>
+
+    <script src="/assets/jquery-gantt/i18n/pt-BR.js?v=2"></script>
+    <script src="/assets/gantt-app.js?v=original-ux-1"></script>
+</body>
+
+</html>

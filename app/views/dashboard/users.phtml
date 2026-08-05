@@ -1,0 +1,148 @@
+<?php $this->partial('header', ['pageTitle' => $pageTitle, 'csrfToken' => $csrfToken]); ?>
+<?php $this->partial('navbar', ['auth' => $auth]); ?>
+<?php $this->partial('sidebar', ['auth' => $auth, 'csrfToken' => $csrfToken, 'currentPage' => 'users']); ?>
+
+<main class="admin-content">
+    <div id="users-app">
+        <section class="page-hero">
+            <div>
+                <p class="eyebrow">Controle de acesso</p>
+                <h1>Gestão de usuários da empresa</h1>
+                <p class="muted">Cadastre usuários no mesmo domínio da empresa, defina permissões e acompanhe o acesso.</p>
+            </div>
+
+            <button class="btn btn-primary" type="button" @click="openCreate">Novo usuário</button>
+        </section>
+
+        <section class="panel">
+            <div class="toolbar">
+                <div>
+                    <h2>Usuários cadastrados</h2>
+                    <p class="muted">Busque por nome ou e-mail para filtrar a listagem.</p>
+                </div>
+
+                <div class="search-box">
+                    <input v-model="search" @keyup.enter="loadUsers" placeholder="Buscar usuário">
+                    <button class="btn btn-secondary" type="button" @click="loadUsers">Buscar</button>
+                </div>
+            </div>
+
+            <p v-if="loading" class="empty-state">Carregando usuários...</p>
+
+            <div v-else class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th>Presença</th>
+                            <th class="actions-col">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="u in users" :key="u.id">
+                            <td>
+                                <strong>{{ u.name }}</strong>
+                                <small>{{ u.email }}</small>
+                            </td>
+                            <td><span class="status-pill status-info">{{ u.role === 'admin' ? 'Administrador' : 'Usuário' }}</span></td>
+                            <td>
+                                <span class="status-pill" :class="u.is_active ? 'status-success' : 'status-danger'">
+                                    {{ u.is_active ? 'Ativo' : 'Bloqueado' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-pill" :class="u.is_online ? 'status-online' : 'status-muted'">
+                                    {{ u.is_online ? 'Online' : 'Offline' }}
+                                </span>
+                            </td>
+                            <td class="row-actions">
+                                <button class="icon-btn" type="button" title="Editar" @click="openEdit(u)">Editar</button>
+                                <button class="icon-btn" type="button" :title="u.is_active ? 'Bloquear' : 'Desbloquear'" @click="toggle(u)">
+                                    {{ u.is_active ? 'Bloquear' : 'Desbloquear' }}
+                                </button>
+                                <button class="icon-btn danger" type="button" title="Excluir" @click="remove(u)">Excluir</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p v-if="!users.length" class="empty-state">Nenhum usuário encontrado.</p>
+            </div>
+        </section>
+
+        <section class="panel audit-card">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Histórico</p>
+                    <h2>Auditorias recentes</h2>
+                </div>
+            </div>
+
+            <ul class="audit-list">
+                <li v-for="a in audits" :key="a.id">
+                    <span class="audit-dot"></span>
+                    <div>
+                        <strong>{{ a.action }}</strong>
+                        <p>{{ a.description }}</p>
+                        <small>{{ a.created_at }}</small>
+                    </div>
+                </li>
+            </ul>
+
+            <p v-if="!audits.length" class="empty-state">Nenhuma auditoria registrada ainda.</p>
+        </section>
+
+        <div v-if="modal" class="modal-backdrop">
+            <form class="modal" @submit.prevent="save">
+                <div class="modal-header">
+                    <div>
+                        <p class="eyebrow">Usuário</p>
+                        <h2>{{ form.id ? 'Editar usuário' : 'Novo usuário' }}</h2>
+                    </div>
+                    <button class="close-btn" type="button" @click="modal = false" aria-label="Fechar">x</button>
+                </div>
+
+                <label>Nome</label>
+                <input v-model="form.name" required minlength="3">
+
+                <label>E-mail (deve ter o domínio da empresa)</label>
+                <input v-model="form.email" type="email" required>
+
+                <label>Perfil</label>
+                <select v-model="form.role">
+                    <option value="user">Usuário</option>
+                    <option value="admin">Administrador</option>
+                </select>
+
+                <div v-if="form.role === 'user'" style="margin: 14px 0; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <label style="font-weight: bold; margin-bottom: 8px; display: block; color: #334155;">Permissões do Usuário</label>
+                    
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-weight: normal; cursor: pointer;">
+                        <input type="checkbox" v-model="form.permissions.can_manage_projects">
+                        Criar & Editar Projetos / Gantt
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                        <input type="checkbox" v-model="form.permissions.can_view_reports">
+                        Visualizar Relatórios do Dashboard
+                    </label>
+                </div>
+
+                <label>Senha {{ form.id ? '(opcional)' : '' }}</label>
+                <input v-model="form.password" type="password" :required="!form.id" minlength="8">
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" @click="modal = false">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/assets/users.js"></script>
+<?php $this->partial('footer'); ?>
