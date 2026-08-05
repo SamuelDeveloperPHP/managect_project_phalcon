@@ -1,0 +1,247 @@
+<?php include dirname(__DIR__) . '/header.phtml'; ?>
+<div class="layout-wrapper">
+    <?php include dirname(__DIR__) . '/navbar.phtml'; ?>
+
+    <div class="layout-body">
+        <?php $currentPage = 'companies'; include dirname(__DIR__) . '/sidebar.phtml'; ?>
+
+        <main class="content-area" style="padding: 24px;">
+            <div class="card" style="max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 16px; margin-bottom: 24px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 22px; color: #1a252f;">Perfil & Configurações da Empresa</h2>
+                        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Gerencie os dados cadastrais, marca, contatos e e-mails de recuperação da sua empresa.</p>
+                    </div>
+                    <?php if (!empty($company->logo_path)): ?>
+                        <img src="<?= htmlspecialchars($company->logo_path, ENT_QUOTES, 'UTF-8') ?>" alt="Logo Empresa" style="max-height: 50px; border-radius: 4px; border: 1px solid #e2e8f0; padding: 4px;">
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($this->flashSession->has('error')): ?>
+                    <div style="background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 14px;">
+                        <?= $this->flashSession->output() ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($this->flashSession->has('success')): ?>
+                    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 14px;">
+                        <?= $this->flashSession->output() ?>
+                    </div>
+                <?php endif; ?>
+
+                <form action="/companies/profile/update" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+
+                    <!-- Seção 1: Dados Principais e Busca CNPJ -->
+                    <h3 style="font-size: 16px; color: #334155; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        🏢 Dados Empresariais & Domínio
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">CNPJ (obrigatório)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="cnpj" name="cnpj" class="form-control" value="<?= htmlspecialchars($company->cnpj ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="00.000.000/0000-00" required style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                <button type="button" id="btn-cnpj-lookup" style="background: #3b82f6; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">🔍 Buscar CNPJ</button>
+                            </div>
+                            <small style="color: #64748b; font-size: 11px;">Preenche automaticamente Razão Social e Endereço.</small>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Domínio Válido da Empresa (obrigatório)</label>
+                            <input type="text" id="domain" name="domain" class="form-control" value="<?= htmlspecialchars($company->domain ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="ex: minhaempresa.com.br" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <small style="color: #64748b; font-size: 11px;">Todos os e-mails de administradores e recuperação devem usar este domínio.</small>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Razão Social / Nome da Empresa</label>
+                        <input type="text" id="name" name="name" class="form-control" value="<?= htmlspecialchars($company->name ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Nome da Empresa LTDA" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Logotipo da Empresa (Imagem)</label>
+                        <input type="file" name="logo" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: block; width: 100%; padding: 6px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                    </div>
+
+                    <!-- Seção 2: E-mails de Recuperação -->
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <h3 style="font-size: 16px; color: #334155; margin-bottom: 16px;">
+                        🔐 Campos de Recuperação de Acesso
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">E-mail de Recuperação do Administrador</label>
+                            <input type="email" id="admin_recovery_email" name="admin_recovery_email" class="form-control" value="<?= htmlspecialchars($company->admin_recovery_email ?? '', ENT_QUOTES, 'UTF-8') ?>" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <small style="color: #64748b; font-size: 11px;">Deve pertencer ao mesmo domínio da empresa.</small>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">E-mail de Recuperação Secundário</label>
+                            <input type="email" id="secondary_recovery_email" name="secondary_recovery_email" class="form-control" value="<?= htmlspecialchars($company->secondary_recovery_email ?? '', ENT_QUOTES, 'UTF-8') ?>" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <small style="color: #64748b; font-size: 11px;">Não pode ser igual ao do admin e deve ser do mesmo domínio.</small>
+                        </div>
+                    </div>
+
+                    <!-- Seção 3: Dados de Contato -->
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <h3 style="font-size: 16px; color: #334155; margin-bottom: 16px;">
+                        📞 Dados de Contato da Empresa
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Nome do Contato</label>
+                            <input type="text" id="contact_name" name="contact_name" class="form-control" value="<?= htmlspecialchars($company->contact_name ?? '', ENT_QUOTES, 'UTF-8') ?>" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">E-mail de Contato</label>
+                            <input type="email" id="contact_email" name="contact_email" class="form-control" value="<?= htmlspecialchars($company->contact_email ?? '', ENT_QUOTES, 'UTF-8') ?>" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">WhatsApp / Telefone</label>
+                            <input type="text" id="contact_whatsapp" name="contact_whatsapp" class="form-control" value="<?= htmlspecialchars($company->contact_whatsapp ?? '', ENT_QUOTES, 'UTF-8') ?>" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+                    </div>
+
+                    <!-- Seção 4: Endereço -->
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <h3 style="font-size: 16px; color: #334155; margin-bottom: 16px;">
+                        📍 Endereço da Empresa
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">CEP</label>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="zip_code" name="zip_code" class="form-control" value="<?= htmlspecialchars($company->zip_code ?? '', ENT_QUOTES, 'UTF-8') ?>" style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                <button type="button" id="btn-cep-lookup" style="background: #64748b; color: #fff; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">CEP</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Logradouro / Rua</label>
+                            <input type="text" id="street" name="street" class="form-control" value="<?= htmlspecialchars($company->street ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Número</label>
+                            <input type="text" id="number" name="number" class="form-control" value="<?= htmlspecialchars($company->number ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 80px; gap: 16px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Complemento</label>
+                            <input type="text" id="complement" name="complement" class="form-control" value="<?= htmlspecialchars($company->complement ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Bairro</label>
+                            <input type="text" id="neighborhood" name="neighborhood" class="form-control" value="<?= htmlspecialchars($company->neighborhood ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Cidade</label>
+                            <input type="text" id="city" name="city" class="form-control" value="<?= htmlspecialchars($company->city ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">UF</label>
+                            <input type="text" id="state" name="state" class="form-control" maxlength="2" value="<?= htmlspecialchars($company->state ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; text-transform: uppercase;">
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                        <button type="submit" style="background: #16a34a; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            💾 Salvar Alterações da Empresa
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnCnpj = document.getElementById('btn-cnpj-lookup');
+    const btnCep = document.getElementById('btn-cep-lookup');
+
+    btnCnpj.addEventListener('click', async function() {
+        const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
+        if (!cnpj || cnpj.length !== 14) {
+            Swal.fire('Atenção', 'Informe um CNPJ válido com 14 dígitos.', 'warning');
+            return;
+        }
+
+        btnCnpj.disabled = true;
+        btnCnpj.textContent = 'Buscando...';
+
+        try {
+            const resp = await fetch('/companies/cnpj-lookup?cnpj=' + cnpj);
+            const json = await resp.json();
+
+            if (json.success && json.data) {
+                const d = json.data;
+                if (d.name) document.getElementById('name').value = d.name;
+                if (d.zip_code) document.getElementById('zip_code').value = d.zip_code;
+                if (d.street) document.getElementById('street').value = d.street;
+                if (d.number) document.getElementById('number').value = d.number;
+                if (d.complement) document.getElementById('complement').value = d.complement;
+                if (d.neighborhood) document.getElementById('neighborhood').value = d.neighborhood;
+                if (d.city) document.getElementById('city').value = d.city;
+                if (d.state) document.getElementById('state').value = d.state;
+                if (d.email && !document.getElementById('contact_email').value) {
+                    document.getElementById('contact_email').value = d.email;
+                }
+
+                Swal.fire('Sucesso', 'Dados do CNPJ preenchidos automaticamente!', 'success');
+            } else {
+                Swal.fire('Erro', json.message || 'CNPJ não encontrado.', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Erro', 'Não foi possível consultar a API de CNPJ.', 'error');
+        } finally {
+            btnCnpj.disabled = false;
+            btnCnpj.textContent = '🔍 Buscar CNPJ';
+        }
+    });
+
+    btnCep.addEventListener('click', async function() {
+        const cep = document.getElementById('zip_code').value.replace(/\D/g, '');
+        if (!cep || cep.length !== 8) {
+            Swal.fire('Atenção', 'Informe um CEP válido com 8 dígitos.', 'warning');
+            return;
+        }
+
+        try {
+            const resp = await fetch('/companies/cep-lookup?cep=' + cep);
+            const json = await resp.json();
+
+            if (json.success && json.data) {
+                const d = json.data;
+                if (d.street) document.getElementById('street').value = d.street;
+                if (d.neighborhood) document.getElementById('neighborhood').value = d.neighborhood;
+                if (d.city) document.getElementById('city').value = d.city;
+                if (d.state) document.getElementById('state').value = d.state;
+            } else {
+                Swal.fire('Erro', json.message || 'CEP não encontrado.', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Erro', 'Não foi possível consultar o CEP.', 'error');
+        }
+    });
+});
+</script>
+
+<?php include dirname(__DIR__) . '/footer.phtml'; ?>

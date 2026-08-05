@@ -1,0 +1,385 @@
+.gantt-page {
+  background: #edf2f7;
+}
+
+.gantt-status-bar {
+  min-height: 52px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #b8ebc8;
+  background: #d9fbe4;
+}
+
+.gantt-status {
+  color: #006b2f;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.gantt-status-bar.success,
+.gantt-status-bar.info {
+  background: #d9fbe4;
+}
+
+.gantt-status-bar.success .gantt-status,
+.gantt-status-bar.info .gantt-status {
+  color: #006b2f;
+}
+
+.gantt-status-actions .btn {
+  min-height: 38px;
+  border-radius: 6px;
+  font-size: .95rem;
+  font-weight: 800;
+}
+
+.gantt-status-actions .btn-secondary {
+  color: #0f172a;
+  background: #f1f5ff;
+}
+
+.gantt-status-actions .btn-primary {
+  background: #2563eb;
+}
+
+.gantt-workspace,
+.TWGanttWorkSpace {
+  background: #fff;
+}
+
+#TWGanttArea {
+  border: 0 !important;
+  background: #fff;
+}
+
+.ganttButtonBar {
+  padding: 10px 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid #d7dee8;
+  background: #fff;
+}
+
+.ganttButtonBar .buttons {
+  display: flex;
+  height: auto;
+  min-height: 46px;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px 12px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.ganttButtonBar>div:not(.buttons),
+.ganttButtonBar>div:not(.buttons) * {
+  display: none !important;
+}
+
+.ganttButtonBar .ganttTitle {
+  margin-right: 18px;
+}
+
+.ganttButtonBar .ganttTitle img {
+  max-width: 120px;
+}
+
+.ganttButtonBar .button.textual,
+.ganttButtonBar .button.buttonImg {
+  display: inline-flex;
+  width: 30px;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  color: #284966;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.ganttButtonBar .button.textual:hover,
+.ganttButtonBar .button.buttonImg:hover {
+  color: #0f2f4d;
+  background: #eef4f9;
+}
+
+.ganttButtonBar .button.textual.icon {
+  height: 30px;
+}
+
+.ganttButtonBar .button.first {
+  min-height: 34px;
+  padding: 7px 14px;
+  color: #fff;
+  border: 0;
+  border-radius: 5px;
+  background: #73b900;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.ganttButtonSeparator {
+  align-self: stretch;
+  min-height: 22px;
+  margin: 4px 4px;
+  border-left: 1px solid #d5dee8;
+}
+
+.ganttButtonBar input[type="file"] {
+  min-height: 33px;
+  border: 1px solid #9ab0c2;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.ganttButtonBar label {
+  margin: 0;
+  color: #1f3654;
+  font-size: .95rem;
+  font-weight: 800;
+}
+
+.ganttButtonBar .button:not(.textual):not(.buttonImg):not(.first) {
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 4px;
+  background: #34495e;
+  font-size: .95rem;
+  font-weight: 800;
+}
+
+.gdfTable {
+  background: #fff;
+}
+
+.gdfTable td,
+.gdfTable th,
+.ganttTable td,
+.ganttTable th {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+
+.gdfColHeader {
+  height: 42px;
+  padding: 0 6px;
+  color: #5e7188;
+  border-right: 1px solid #d7dee8;
+  border-bottom: 1px solid #c7d1dc;
+  background: #edf1f5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.gdfColHeader,
+.gdfCell {
+  text-overflow: ellipsis;
+}
+
+.gdfCell {
+  height: 30px;
+  padding: 4px 7px;
+  color: #1f2f45;
+  border-right: 1px solid #e0e6ed;
+  border-bottom: 1px solid #e0e6ed;
+  background: #fff;
+  font-size: 13px;
+}
+
+.taskEditRow:nth-child(even) .gdfCell,
+.taskEditRow:nth-child(even) th.gdfCell {
+  background: #fbfdff;
+}
+
+.taskEditRow.rowSelected .gdfCell,
+.taskEditRow.rowSelected th.gdfCell {
+  background: #e9f6ff;
+}
+
+.taskEditRow input,
+.columnWidthTest {
+  height: 22px;
+  color: #172033;
+  font-size: 13px;
+}
+
+.taskEditRow input[readonly] {
+  color: #7c8a99;
+}
+
+.gdfCellInput {
+  background: #e4f9ee;
+}
+
+.taskStatus {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, .18);
+}
+
+.taskStatus[status=STATUS_ACTIVE] {
+  background-color: #2fbf65;
+}
+
+.taskStatus[status=STATUS_DONE] {
+  background-color: #4aa8e8;
+}
+
+.taskStatus[status=STATUS_FAILED] {
+  background-color: #7c3f98;
+}
+
+.taskStatus[status=STATUS_SUSPENDED] {
+  background-color: #f2bd46;
+}
+
+.taskStatus[status=STATUS_WAITING] {
+  background-color: #f18a2b;
+}
+
+.exp-controller {
+  top: 3px;
+  opacity: .75;
+}
+
+.splitElement {
+  background: #fff;
+}
+
+.vSplitBar {
+  width: 6px;
+  border-right: 1px solid #c8d2df;
+  border-left: 1px solid #d9e1ea;
+  background-color: #edf1f5;
+  box-shadow: none;
+}
+
+.ganttTable {
+  background: #fff;
+}
+
+.ganttFixHead {
+  z-index: 3;
+}
+
+.ganttHead1,
+.ganttHead2 {
+  height: 22px;
+}
+
+.ganttHead1 th,
+.ganttHead2 th {
+  color: #65758b;
+  border-left: 1px solid #d7dee8;
+  border-bottom: 1px solid #c7d1dc;
+  background: #edf1f5;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ganttHead1 th {
+  height: 22px;
+  padding-top: 3px;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+.ganttHead1 th.monthYear {
+  color: #455a70;
+}
+
+.ganttHead2 th {
+  height: 24px;
+  padding-bottom: 3px;
+  color: #5c6f83;
+  font-size: 11px;
+}
+
+.ganttHead2 th.dayNumber {
+  font-weight: 700;
+}
+
+.ganttHead2 th.holy,
+.ganttBodyCell.holy {
+  background-color: #f8eee8;
+}
+
+.ganttBodyCell {
+  border-left: 1px solid #edf1f5;
+}
+
+.ganttTable td.end {
+  border-right: 2px solid #c7d1dc;
+}
+
+.ganttLinesSVG {
+  stroke: #e1e7ee;
+}
+
+.isGanttList .ganttLinesSVG:nth-child(even) {
+  fill: #fbfdff;
+  stroke: #e1e7ee;
+}
+
+.isGanttList .ganttLinesSVG:nth-child(odd) {
+  fill: #fff;
+  stroke: #e1e7ee;
+}
+
+.colorByStatus .taskStatusSVG[status=STATUS_ACTIVE],
+.colorByStatus .taskStatusSVG[status=STATUS_DONE],
+.colorByStatus .taskStatusSVG[status=STATUS_WAITING],
+.colorByStatus .taskStatusSVG[status=STATUS_SUSPENDED],
+.colorByStatus .taskStatusSVG[status=STATUS_UNDEFINED] {
+  fill: #59c267;
+}
+
+.colorByStatus .taskStatusSVG[status=STATUS_FAILED] {
+  fill: #d35f5f;
+}
+
+.taskBoxSVG .taskLayout {
+  stroke: rgba(21, 86, 48, .24);
+  stroke-width: 1px;
+}
+
+.taskBoxSVG .textPerc {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.taskLabelSVG {
+  fill: #52657a;
+  font-size: 11px;
+}
+
+.taskLinkPathSVG {
+  stroke: rgba(64, 101, 133, .55);
+  stroke-width: 2px;
+}
+
+.ganttTodaySVG {
+  stroke: #df5964;
+  stroke-width: 2px;
+}
+
+@media (max-width: 560px) {
+  .ganttButtonBar {
+    padding: 12px;
+  }
+
+  .ganttButtonBar .buttons {
+    gap: 8px;
+    min-width: max-content;
+  }
+
+  .ganttButtonBar .ganttTitle {
+    width: 100%;
+    margin-right: 0;
+  }
+}
