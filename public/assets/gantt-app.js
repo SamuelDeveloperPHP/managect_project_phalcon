@@ -28,6 +28,129 @@
     alert(title + ': ' + message);
   }
 
+  function currentFullscreenElement() {
+    return document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.msFullscreenElement ||
+      null;
+  }
+
+  function requestFullscreen(element) {
+    var request = element.requestFullscreen ||
+      element.webkitRequestFullscreen ||
+      element.msRequestFullscreen;
+
+    return request ? request.call(element) : null;
+  }
+
+  function exitFullscreen() {
+    var exit = document.exitFullscreen ||
+      document.webkitExitFullscreen ||
+      document.msExitFullscreen;
+
+    return exit ? exit.call(document) : null;
+  }
+
+  function updateFullscreenButton(active) {
+    var button = $('#fullscrbtn');
+
+    if (!button.length) {
+      return;
+    }
+
+    if (!button.find('.gantt-fullscreen-icon').length) {
+      button.empty().append($('<span>', {
+        'class': 'gantt-fullscreen-icon',
+        'aria-hidden': 'true'
+      }));
+    }
+
+    button
+      .toggleClass('is-fullscreen', active)
+      .attr('title', active ? 'Sair da tela cheia' : 'Tela cheia')
+      .attr('aria-label', active ? 'Sair da tela cheia' : 'Tela cheia')
+      .attr('aria-pressed', active ? 'true' : 'false');
+  }
+
+  function resizeGanttAfterFullscreen() {
+    if (!window.ge || typeof window.ge.resize !== 'function') {
+      return;
+    }
+
+    setTimeout(function () {
+      window.ge.resize();
+
+      if (window.ge.gantt && typeof window.ge.gantt.redraw === 'function') {
+        window.ge.gantt.redraw();
+      }
+    }, 80);
+  }
+
+  function patchFullscreenButton() {
+    if (!window.GanttMaster || window.GanttMaster.prototype.projectFullscreenPatched) {
+      return;
+    }
+
+    window.GanttMaster.prototype.projectFullscreenPatched = true;
+    window.GanttMaster.prototype.fullScreen = function () {
+      var workspace = this.workSpace;
+      var workspaceElement = workspace && workspace[0];
+      var nativeFullscreenElement = currentFullscreenElement();
+      var isActive = workspace && workspace.is('.ganttFullScreen');
+      var nativeIsActive = nativeFullscreenElement === workspaceElement;
+      var fullscreenChange;
+
+      if (!workspace || !workspaceElement) {
+        return;
+      }
+
+      if (isActive || nativeIsActive) {
+        workspace.removeClass('ganttFullScreen').resize();
+        updateFullscreenButton(false);
+
+        if (nativeFullscreenElement) {
+          fullscreenChange = exitFullscreen();
+        }
+      } else {
+        workspace.addClass('ganttFullScreen').resize();
+        updateFullscreenButton(true);
+        fullscreenChange = requestFullscreen(workspaceElement);
+      }
+
+      if (fullscreenChange && typeof fullscreenChange.catch === 'function') {
+        fullscreenChange.catch(function () {
+          updateFullscreenButton(workspace.is('.ganttFullScreen'));
+          resizeGanttAfterFullscreen();
+        });
+      }
+
+      resizeGanttAfterFullscreen();
+    };
+
+    $(document).on('fullscreenchange webkitfullscreenchange msfullscreenchange', function () {
+      if (!window.ge || !window.ge.workSpace) {
+        return;
+      }
+
+      var active = currentFullscreenElement() === window.ge.workSpace[0];
+      window.ge.workSpace.toggleClass('ganttFullScreen', active).resize();
+      updateFullscreenButton(active);
+      resizeGanttAfterFullscreen();
+    });
+
+    $(document).on('keydown', function (event) {
+      if (event.key !== 'Escape' || currentFullscreenElement() || !window.ge || !window.ge.workSpace) {
+        return;
+      }
+
+      if (window.ge.workSpace.is('.ganttFullScreen')) {
+        window.ge.workSpace.removeClass('ganttFullScreen').resize();
+        updateFullscreenButton(false);
+        resizeGanttAfterFullscreen();
+      }
+    });
+  }
+
   function projectRequest(url, options) {
     options = options || {};
     options.headers = Object.assign({
@@ -48,20 +171,24 @@
 
   function loadGantt() {
     setStatus('Carregando cronograma...', 'info');
+    patchFullscreenButton();
 
     projectRequest('/api/projects/' + projectId + '/gantt')
       .then(function (data) {
         window.ge = new GanttMaster();
+        tuneLargeTimeline(data.project);
         window.ge.set100OnClose = true;
         window.ge.shrinkParent = true;
         window.ge.resourceUrl = '/assets/jquery-gantt/res/';
         window.ge.init($('#workSpace'));
+        updateFullscreenButton(false);
 
         if (typeof window.loadI18n === 'function') {
           window.loadI18n();
         }
 
         window.ge.loadProject(data.project);
+        resetGanttScroll();
         window.ge.gantt.zoom = '1M';
         window.ge.gantt.gridChanged = true;
         window.ge.gantt.redraw();
@@ -108,7 +235,10 @@
       body: JSON.stringify(project)
     })
       .then(function (data) {
+        tuneLargeTimeline(data.project);
         window.ge.loadProject(data.project);
+        resetGanttScroll();
+        window.ge.gantt.redraw();
         window.ge.checkpoint();
         setStatus(data.message || 'Cronograma salvo.', 'success');
         notify('Sucesso', data.message || 'Cronograma salvo.', 'success');
@@ -120,6 +250,32 @@
 
     return false;
   };
+
+  function tuneLargeTimeline(project) {
+    if (!window.ge || !project || !Array.isArray(project.tasks)) {
+      return;
+    }
+
+    if (project.tasks.length > 80) {
+      window.ge.rowBufferSize = project.tasks.length + 10;
+    }
+  }
+
+  function resetGanttScroll() {
+    if (!window.ge || !window.ge.splitter) {
+      return;
+    }
+
+    if (window.ge.splitter.firstBox) {
+      window.ge.splitter.firstBox.scrollTop(0);
+    }
+
+    if (window.ge.splitter.secondBox) {
+      window.ge.splitter.secondBox.scrollTop(0);
+    }
+
+    window.ge.firstScreenLine = 0;
+  }
 
   window.newProject = function () {
     if (!window.ge) {
