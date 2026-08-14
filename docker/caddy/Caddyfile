@@ -1,0 +1,10 @@
+# Proxy reverso com HTTPS automatico (Let's Encrypt).
+# O dominio vem da variavel DOMAIN definida no .env.
+# O Caddy obtem e renova o certificado TLS sozinho, desde que:
+#   - o DNS do dominio aponte para o IP externo da VM
+#   - as portas 80 e 443 estejam abertas no firewall do GCP
+
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:80
+}

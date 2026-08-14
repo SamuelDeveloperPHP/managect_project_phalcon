@@ -1,0 +1,102 @@
+services:
+  app:
+    # Imagem pronta, compilada no Cloud Build e publicada no Artifact Registry.
+    # A VM apenas baixa (pull) — nao compila nada. Defina APP_IMAGE no .env.
+    image: "${APP_IMAGE:?Defina APP_IMAGE no .env, ex REGIAO-docker.pkg.dev/SEU_PROJETO/phalcon/app:latest}"
+    container_name: phalcon_app
+    restart: unless-stopped
+    # Sem "ports" publicos: quem fala com a internet e o Caddy.
+    # O app fica acessivel apenas na rede interna, na porta 80.
+    expose:
+      - "80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-phalcon}
+      DB_USERNAME: ${DB_USERNAME:-phalcon}
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@phalcon.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - phalcon_network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: phalcon_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Defina DOMAIN no arquivo .env}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - phalcon_network
+
+  mysql:
+    image: mysql:5.7
+    container_name: phalcon_mysql
+    restart: unless-stopped
+    # Sem "ports": o banco fica acessivel somente na rede interna dos containers.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      MYSQL_DATABASE: ${DB_DATABASE:-phalcon}
+      MYSQL_USER: ${DB_USERNAME:-phalcon}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --sql-mode=
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - phalcon_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: phalcon_redis
+    restart: unless-stopped
+    # Sem "ports": Redis somente na rede interna.
+    volumes:
+      - redis_data:/data
+    networks:
+      - phalcon_network
+
+# phpMyAdmin foi propositalmente removido da producao por seguranca.
+# Para administrar o banco, use um tunel SSH (veja DEPLOY.md).
+
+volumes:
+  mysql_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  phalcon_network:
+    driver: bridge
