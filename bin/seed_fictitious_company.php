@@ -3,9 +3,14 @@
 declare(strict_types=1);
 
 $pdo = new PDO(
-    'mysql:host=mysql;dbname=phalcon;charset=utf8mb4',
-    'phalcon',
-    'phalcon123',
+    sprintf(
+        'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+        getenv('DB_HOST') ?: 'mysql',
+        (int)(getenv('DB_PORT') ?: 3306),
+        getenv('DB_DATABASE') ?: 'phalcon'
+    ),
+    getenv('DB_USERNAME') ?: 'phalcon',
+    getenv('DB_PASSWORD') ?: '',
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
 );
 
@@ -67,7 +72,7 @@ echo "Razão Social  : {$name}" . PHP_EOL;
 echo "CNPJ          : {$cnpj}" . PHP_EOL;
 echo "Domínio       : {$domain}" . PHP_EOL;
 echo "E-mail Admin  : admin@techcorp.com.br" . PHP_EOL;
-echo "Senha Admin   : Admin@123" . PHP_EOL;
+echo "Senha Admin   : senha atual do usuario, definida pelo ambiente." . PHP_EOL;
 echo "Recup. Admin  : admin.recuperacao@techcorp.com.br" . PHP_EOL;
 echo "Recup. Secund.: seguranca.recuperacao@techcorp.com.br" . PHP_EOL;
 echo "Contato       : Carlos Eduardo Silva (contato@techcorp.com.br / (11) 98765-4321)" . PHP_EOL;

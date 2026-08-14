@@ -15,8 +15,12 @@ Abra o PowerShell:
 
 ```powershell
 cd C:\wamp64\www\phalcon
+copy .env.example .env
+notepad .env
 docker compose up -d
 ```
+
+Antes de subir o ambiente, altere no `.env` as senhas de `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` e `ADMIN_PASSWORD`.
 
 Confira se os containers estao rodando:
 
@@ -116,8 +120,8 @@ http://localhost:8081
 ## Acesso inicial
 
 ```text
-E-mail: admin@phalcon.local
-Senha: Admin@123
+E-mail: valor de ADMIN_EMAIL no .env
+Senha: valor de ADMIN_PASSWORD no .env
 ```
 
 ## Banco de dados
@@ -130,21 +134,21 @@ Porta interna: 3306
 Porta no Windows: 3307
 Banco: phalcon
 Usuario: phalcon
-Senha: phalcon123
+Senha: valor de DB_PASSWORD no .env
 Root: root
-Senha root: root123
+Senha root: valor de MYSQL_ROOT_PASSWORD no .env
 ```
 
 Acessar pelo terminal:
 
 ```powershell
-docker compose exec mysql mysql -uphalcon -pphalcon123 phalcon
+docker compose exec mysql sh -lc 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
 Acessar como root:
 
 ```powershell
-docker compose exec mysql mysql -uroot -proot123 phalcon
+docker compose exec mysql sh -lc 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
 ## Redis
@@ -251,4 +255,3 @@ docker compose exec app composer dump-autoload
 - O Redis esta exposto na porta `6379`.
 - As rotas administrativas exigem login.
 - Algumas rotas exigem perfil de administrador.
-
