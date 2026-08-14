@@ -3,6 +3,13 @@
 declare(strict_types=1);
 
 return static function (PDO $pdo): void {
+    $adminEmail = getenv('ADMIN_EMAIL') ?: 'admin@phalcon.local';
+    $adminPassword = trim((string)getenv('ADMIN_PASSWORD'));
+
+    if ($adminPassword === '') {
+        throw new RuntimeException('Defina ADMIN_PASSWORD no arquivo .env antes de criar o usuario administrador.');
+    }
+
     $pdo->exec(
         'CREATE TABLE users (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -26,7 +33,7 @@ return static function (PDO $pdo): void {
     );
     $statement->execute([
         'name' => 'Administrador',
-        'email' => 'admin@phalcon.local',
-        'password' => password_hash('Admin@123', PASSWORD_DEFAULT),
+        'email' => $adminEmail,
+        'password' => password_hash($adminPassword, PASSWORD_DEFAULT),
     ]);
 };

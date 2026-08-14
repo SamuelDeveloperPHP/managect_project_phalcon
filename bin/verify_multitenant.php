@@ -6,9 +6,14 @@ require_once __DIR__ . '/../app/models/Company.php';
 use App\Models\Company;
 
 $pdo = new PDO(
-    'mysql:host=mysql;dbname=phalcon;charset=utf8mb4',
-    'phalcon',
-    'phalcon123',
+    sprintf(
+        'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+        getenv('DB_HOST') ?: 'mysql',
+        (int)(getenv('DB_PORT') ?: 3306),
+        getenv('DB_DATABASE') ?: 'phalcon'
+    ),
+    getenv('DB_USERNAME') ?: 'phalcon',
+    getenv('DB_PASSWORD') ?: '',
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
 );
 

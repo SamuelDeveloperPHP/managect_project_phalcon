@@ -40,7 +40,7 @@ final class GanttController extends ControllerBase
 
     private function loadGanttTemplates(): string
     {
-        $source = dirname(__DIR__, 2) . '/jQueryGantt-master/gantt.html';
+        $source = dirname(__DIR__, 2) . '/public/assets/jquery-gantt/gantt.html';
         $html = is_file($source) ? (string)file_get_contents($source) : '';
         $start = strpos($html, '<div id="gantEditorTemplates"');
         $end = strpos($html, '$(document).on("change", "#load-file"', $start ?: 0);

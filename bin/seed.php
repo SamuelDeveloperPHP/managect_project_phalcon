@@ -13,7 +13,7 @@ $dsn = sprintf(
 $pdo = new PDO(
     $dsn,
     getenv('DB_USERNAME') ?: 'phalcon',
-    getenv('DB_PASSWORD') ?: 'phalcon123',
+    getenv('DB_PASSWORD') ?: '',
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

@@ -7,7 +7,7 @@ return [
         'host' => getenv('DB_HOST') ?: 'mysql',
         'port' => (int) (getenv('DB_PORT') ?: 3306),
         'username' => getenv('DB_USERNAME') ?: 'phalcon',
-        'password' => getenv('DB_PASSWORD') ?: 'phalcon123',
+        'password' => getenv('DB_PASSWORD') ?: '',
         'dbname' => getenv('DB_DATABASE') ?: 'phalcon',
         'charset' => 'utf8mb4',
     ],
