@@ -9,7 +9,7 @@ return static function (): Router {
     $router->removeExtraSlashes(true);
 
     $router->addGet('/', [
-        'controller' => 'dashboard',
+        'controller' => 'home',
         'action' => 'index',
     ])->setName('home');
 
@@ -22,6 +22,16 @@ return static function (): Router {
         'controller' => 'auth',
         'action' => 'authenticate',
     ])->setName('login.authenticate');
+
+    $router->addGet('/register', [
+        'controller' => 'auth',
+        'action' => 'register',
+    ])->setName('register.form');
+
+    $router->addPost('/register', [
+        'controller' => 'auth',
+        'action' => 'createDevelopmentAccount',
+    ])->setName('register.create');
 
     $router->addGet('/dashboard', [
         'controller' => 'dashboard',

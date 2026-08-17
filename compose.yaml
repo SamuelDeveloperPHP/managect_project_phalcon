@@ -77,8 +77,8 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      PMA_USER: ${DB_USERNAME:-phalcon}
+      PMA_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
     depends_on:
       mysql:
         condition: service_healthy
