@@ -1,0 +1,41 @@
+:root{
+  --ink:#12342f; --ink-soft:#4b5f5a; --line:#e2e8e5; --bg:#f6f8f7; --card:#fff;
+  --brand:#12342f; --accent-strong:#115e59;
+}
+*{box-sizing:border-box}
+body.legal-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#1f2d2a;line-height:1.6}
+.legal-nav{background:var(--brand);color:#fff;padding:14px 20px}
+.legal-nav .wrap{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.legal-brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;text-decoration:none;font-size:18px}
+.legal-brand .mark{width:30px;height:30px;border-radius:8px;background:#7dd3a8;color:#12342f;display:grid;place-items:center;font-weight:800}
+.legal-nav a.back{color:#cdeede;text-decoration:none;font-size:14px}
+.legal-nav a.back:hover{text-decoration:underline}
+.legal-main{max-width:860px;margin:0 auto;padding:28px 20px 40px}
+.legal-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 34px}
+.legal-card h1{margin:0 0 6px;font-size:26px;color:var(--ink)}
+.legal-meta{color:var(--ink-soft);font-size:13px;margin-bottom:18px}
+.legal-card h2{font-size:19px;color:var(--ink);margin:26px 0 8px}
+.legal-card h3{font-size:15px;color:var(--ink);margin:18px 0 6px}
+.legal-card p,.legal-card li{font-size:15px;color:#26332f}
+.legal-card ul,.legal-card ol{padding-left:22px}
+.legal-card a{color:var(--accent-strong)}
+.legal-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.legal-table th,.legal-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.legal-table th{background:#eef4f1}
+.legal-footer{max-width:860px;margin:0 auto;padding:0 20px 40px;color:var(--ink-soft);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+.legal-footer a{color:var(--accent-strong)}
+/* Página de aceite */
+.accept-wrap{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(160deg,#12342f,#0b1f1c)}
+.accept-card{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:30px 32px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.accept-card h1{margin:0 0 6px;font-size:22px;color:var(--ink)}
+.accept-card .sub{color:var(--ink-soft);font-size:14px;margin-bottom:18px}
+.accept-box{border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px;max-height:220px;overflow:auto;background:#fafbfa;margin-bottom:16px}
+.accept-box p{margin:0 0 10px}
+.accept-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:14px 0 20px;cursor:pointer;user-select:none}
+.accept-check input{margin-top:3px;width:18px;height:18px;flex:none}
+.accept-actions{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.btn{border:none;border-radius:10px;padding:12px 22px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-primary{background:var(--accent-strong);color:#fff}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.link-muted{color:var(--ink-soft);font-size:13px}
+.flash-error,.messages .messageError,div.messageError{background:#fdecea;border:1px solid #f5c2c0;color:#a32019;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px}
