@@ -11,6 +11,9 @@ services:
       - "80"
     volumes:
       - ./:/var/www/html
+      # Config do Apache (headers/CSP) por bind mount: aplica via git pull + restart,
+      # sem recompilar a imagem. Igual ao Caddyfile logo abaixo.
+      - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
     environment:
       APP_ENV: ${APP_ENV:-production}
       DB_HOST: ${DB_HOST:-mysql}

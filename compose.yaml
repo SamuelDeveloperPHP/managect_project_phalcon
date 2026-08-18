@@ -9,6 +9,9 @@ services:
       - "8080:80"
     volumes:
       - ./:/var/www/html
+      # Config do Apache (headers/CSP) por bind mount: editar + restart aplica,
+      # sem rebuild da imagem.
+      - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
     environment:
       APP_ENV: ${APP_ENV:-development}
       DB_HOST: ${DB_HOST:-mysql}
