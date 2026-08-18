@@ -37,6 +37,21 @@ return static function (DiInterface $container, array $config): void {
     );
 
     $container->setShared('session', function (): Manager {
+        // Endurece o cookie de sessão antes do start. Secure só sob HTTPS
+        // (detecta o proxy Caddy via X-Forwarded-Proto) para não quebrar o dev em HTTP.
+        $isHttps = (($_SERVER['HTTPS'] ?? '') === 'on')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+
+        ini_set('session.use_strict_mode', '1');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'httponly' => true,
+            'secure' => $isHttps,
+            'samesite' => 'Lax',
+        ]);
+
         $session = new Manager(['uniqueId' => 'phalcon-auth']);
         $session->setAdapter(new Stream(['savePath' => '/tmp']));
         $session->setName('phalcon_auth')->start();

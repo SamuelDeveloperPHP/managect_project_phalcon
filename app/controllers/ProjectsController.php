@@ -17,6 +17,38 @@ final class ProjectsController extends ControllerBase
     protected bool $requiresAuthentication = true;
     protected bool $requiresAdmin = false;
 
+    /** Extensões aceitas em anexos de projeto. Barreira principal contra upload de código executável (RCE). */
+    private const ALLOWED_UPLOAD_EXTENSIONS = [
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+        'csv', 'txt', 'zip',
+    ];
+
+    /** MIME types perigosos: rejeitados mesmo quando a extensão parece inofensiva. */
+    private const BLOCKED_UPLOAD_MIMES = [
+        'text/html', 'application/xhtml+xml', 'image/svg+xml',
+        'text/x-php', 'application/x-php', 'application/x-httpd-php',
+        'application/x-httpd-php-source', 'text/x-python', 'text/x-perl',
+        'application/x-sh', 'application/x-executable', 'application/x-msdownload',
+        'application/x-dosexec',
+    ];
+
+    private const MAX_UPLOAD_BYTES = 10485760; // 10 MB
+
+    /** Conteúdo do .htaccess que desativa execução de código na árvore de uploads (defesa em profundidade). */
+    private const UPLOAD_HTACCESS = <<<'HTACCESS'
+# Pasta de uploads: conteúdo enviado por usuários. NUNCA executar como código.
+# Remove a associação de handler/execução de qualquer script conhecido.
+RemoveHandler .php .phtml .phar .pht .php3 .php4 .php5 .php7 .phps .cgi .pl .py .asp .aspx .jsp .sh
+RemoveType .php .phtml .phar .pht .php3 .php4 .php5 .php7 .phps
+# Nega acesso HTTP a qualquer arquivo executável/perigoso (independe de mod_php).
+<FilesMatch "(?i)\.(php[0-9]?|phtml|phar|pht|phps|cgi|pl|py|asp|aspx|jsp|sh|htaccess|htpasswd)$">
+    Require all denied
+</FilesMatch>
+# Sem execução CGI e sem listagem de diretório.
+Options -ExecCGI -Indexes
+HTACCESS;
+
     public function indexAction(): void
     {
         $companyId = $this->currentCompanyId();
@@ -274,6 +306,8 @@ final class ProjectsController extends ControllerBase
             throw new \RuntimeException('Não foi possível preparar a pasta de anexos.');
         }
 
+        $this->ensureUploadGuard();
+
         foreach ($this->request->getUploadedFiles(true) as $file) {
             if (!$file instanceof FileInterface || $file->getError() !== UPLOAD_ERR_OK) {
                 continue;
@@ -285,7 +319,20 @@ final class ProjectsController extends ControllerBase
             }
 
             $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-            $storedName = bin2hex(random_bytes(16)) . ($extension !== '' ? '.' . $extension : '');
+            if (!in_array($extension, self::ALLOWED_UPLOAD_EXTENSIONS, true)) {
+                throw new \RuntimeException('Tipo de arquivo não permitido (.' . $extension . '). Envie imagem, PDF, Office, TXT, CSV ou ZIP.');
+            }
+
+            if ((int)$file->getSize() > self::MAX_UPLOAD_BYTES) {
+                throw new \RuntimeException('O arquivo "' . $original . '" excede o limite de 10 MB.');
+            }
+
+            $detectedMime = $this->detectMime((string)$file->getTempName());
+            if ($detectedMime !== '' && in_array($detectedMime, self::BLOCKED_UPLOAD_MIMES, true)) {
+                throw new \RuntimeException('Conteúdo não permitido no arquivo "' . $original . '".');
+            }
+
+            $storedName = bin2hex(random_bytes(16)) . '.' . $extension;
             $target = $basePath . '/' . $storedName;
             $publicPath = '/uploads/projects/' . $projectId . '/' . $storedName;
 
@@ -376,6 +423,41 @@ final class ProjectsController extends ControllerBase
     {
         $name = preg_replace('/[^A-Za-z0-9._ -]/', '', basename($name));
         return trim((string)$name);
+    }
+
+    /** Garante o .htaccess que impede execução de código na árvore de uploads. */
+    private function ensureUploadGuard(): void
+    {
+        $uploadsRoot = dirname(__DIR__, 2) . '/public/uploads';
+        $guard = $uploadsRoot . '/.htaccess';
+
+        if (is_file($guard)) {
+            return;
+        }
+
+        if (!is_dir($uploadsRoot)) {
+            @mkdir($uploadsRoot, 0775, true);
+        }
+
+        @file_put_contents($guard, self::UPLOAD_HTACCESS);
+    }
+
+    /** Detecta o MIME real pelo conteúdo (magic bytes), independente do que o cliente informou. */
+    private function detectMime(string $path): string
+    {
+        if ($path === '' || !is_readable($path) || !function_exists('finfo_open')) {
+            return '';
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return '';
+        }
+
+        $mime = (string) finfo_file($finfo, $path);
+        finfo_close($finfo);
+
+        return strtolower($mime);
     }
 
     private function dateValue(mixed $value): ?string

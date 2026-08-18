@@ -1,0 +1,10 @@
+# Pasta de uploads: conteúdo enviado por usuários. NUNCA executar como código.
+# Remove a associação de handler/execução de qualquer script conhecido.
+RemoveHandler .php .phtml .phar .pht .php3 .php4 .php5 .php7 .phps .cgi .pl .py .asp .aspx .jsp .sh
+RemoveType .php .phtml .phar .pht .php3 .php4 .php5 .php7 .phps
+# Nega acesso HTTP a qualquer arquivo executável/perigoso (independe de mod_php).
+<FilesMatch "(?i)\.(php[0-9]?|phtml|phar|pht|phps|cgi|pl|py|asp|aspx|jsp|sh|htaccess|htpasswd)$">
+    Require all denied
+</FilesMatch>
+# Sem execução CGI e sem listagem de diretório.
+Options -ExecCGI -Indexes
