@@ -19,7 +19,8 @@ $domain = 'techcorp.com.br';
 $name = 'TechCorp Soluções Inovadoras LTDA';
 
 // Clear existing company with same CNPJ/domain if any
-$pdo->exec("DELETE FROM companies WHERE cnpj = '{$cnpj}' OR domain = '{$domain}'");
+$delete = $pdo->prepare('DELETE FROM companies WHERE cnpj = :cnpj OR domain = :domain');
+$delete->execute(['cnpj' => $cnpj, 'domain' => $domain]);
 
 $stmt = $pdo->prepare('INSERT INTO companies (
     name, cnpj, domain, zip_code, street, number, complement, neighborhood, city, state,
@@ -58,11 +59,12 @@ $stmtUser->execute([
     'company_id' => $companyId,
 ]);
 
-// Link existing projects and tasks to this new company for testing
-$pdo->exec("UPDATE projects SET company_id = {$companyId}");
-$pdo->exec("UPDATE gantt_tasks SET company_id = {$companyId}");
-$pdo->exec("UPDATE project_files SET company_id = {$companyId}");
-$pdo->exec("UPDATE audit_logs SET company_id = {$companyId}");
+// Link existing projects and tasks to this new company for testing.
+// Nomes de tabela vêm de uma lista fixa no código (não de entrada externa).
+foreach (['projects', 'gantt_tasks', 'project_files', 'audit_logs'] as $table) {
+    $pdo->prepare("UPDATE {$table} SET company_id = :company_id")
+        ->execute(['company_id' => $companyId]);
+}
 
 echo "========================================================================" . PHP_EOL;
 echo "  EMPRESA FICTÍCIA CRIADA E VINCULADA AO USUÁRIO ID = 1 COM SUCESSO!    " . PHP_EOL;

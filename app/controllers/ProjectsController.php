@@ -171,6 +171,16 @@ HTACCESS;
             $userId = is_array($auth) ? (int)$auth['id'] : null;
             $leaderId = (int)$this->request->getPost('leader_id');
 
+            // Aceita apenas líder/responsáveis que pertençam à empresa atual (previne IDOR cross-tenant).
+            $memberIds = array_values(array_unique(array_filter(array_map('intval', (array)$this->request->getPost('member_ids')))));
+            if ($leaderId > 0) {
+                $memberIds[] = $leaderId;
+            }
+            $memberIds = $this->filterCompanyUserIds($memberIds, $companyId);
+            if ($leaderId > 0 && !in_array($leaderId, $memberIds, true)) {
+                $leaderId = 0;
+            }
+
             $project->assign([
                 'company_id' => $companyId,
                 'name' => $this->cleanText($name, 190),
@@ -188,11 +198,6 @@ HTACCESS;
 
             if ($creating) {
                 $project->created_by = $userId;
-            }
-
-            $memberIds = array_values(array_unique(array_filter(array_map('intval', (array)$this->request->getPost('member_ids')))));
-            if ($leaderId > 0 && !in_array($leaderId, $memberIds, true)) {
-                $memberIds[] = $leaderId;
             }
 
             $this->db->begin();
@@ -388,6 +393,31 @@ HTACCESS;
             $ids[] = (int)$row->user_id;
         }
         return $ids;
+    }
+
+    /** Mantém apenas IDs de usuários ativos que pertencem à empresa informada. */
+    private function filterCompanyUserIds(array $ids, int $companyId): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $ids),
+            static fn (int $id): bool => $id > 0
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = User::find([
+            'conditions' => 'company_id = :cid: AND deleted_at IS NULL AND id IN ({ids:array})',
+            'bind' => ['cid' => $companyId, 'ids' => $ids],
+        ]);
+
+        $valid = [];
+        foreach ($rows as $user) {
+            $valid[] = (int) $user->id;
+        }
+
+        return $valid;
     }
 
     private function members(int $projectId): array

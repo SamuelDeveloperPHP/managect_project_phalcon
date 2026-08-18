@@ -11,6 +11,10 @@ return [
         'dbname' => getenv('DB_DATABASE') ?: 'phalcon',
         'charset' => 'utf8mb4',
     ],
+    'redis' => [
+        'host' => getenv('REDIS_HOST') ?: 'redis',
+        'port' => (int) (getenv('REDIS_PORT') ?: 6379),
+    ],
     'paths' => [
         'views' => dirname(__DIR__) . '/views/',
     ],

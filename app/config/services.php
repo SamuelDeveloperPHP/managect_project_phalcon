@@ -36,6 +36,13 @@ return static function (DiInterface $container, array $config): void {
         fn (): Mysql => new Mysql($config['database'])
     );
 
+    $container->setShared('redis', function () use ($config): \Redis {
+        $redis = new \Redis();
+        $redis->connect($config['redis']['host'], $config['redis']['port'], 1.5);
+
+        return $redis;
+    });
+
     $container->setShared('session', function (): Manager {
         // Endurece o cookie de sessão antes do start. Secure só sob HTTPS
         // (detecta o proxy Caddy via X-Forwarded-Proto) para não quebrar o dev em HTTP.

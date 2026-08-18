@@ -12,6 +12,11 @@ final class AuthController extends ControllerBase
 {
     protected bool $requiresAuthentication = false;
 
+    /** Rate limit de login (anti brute force). Janela e limites por IP e por e-mail. */
+    private const LOGIN_MAX_PER_IP = 12;
+    private const LOGIN_MAX_PER_EMAIL = 6;
+    private const LOGIN_WINDOW_SECONDS = 900; // 15 minutos
+
     public function loginAction()
     {
         if ($this->session->has('auth')) {
@@ -60,12 +65,18 @@ final class AuthController extends ControllerBase
             return $this->response->redirect('/login');
         }
 
+        if ($this->isLoginBlocked($email)) {
+            $this->flashSession->error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
+            return $this->response->redirect('/login');
+        }
+
         $user = User::findFirst([
             'conditions' => 'email = :email: AND is_active = 1 AND deleted_at IS NULL',
             'bind' => ['email' => $email],
         ]);
 
         if (!$user instanceof User || !password_verify($password, $user->password)) {
+            $this->registerLoginFailure($email);
             $this->flashSession->error('E-mail ou senha inválidos.');
             return $this->response->redirect('/login');
         }
@@ -76,6 +87,7 @@ final class AuthController extends ControllerBase
             return $this->response->redirect('/login');
         }
 
+        $this->clearLoginFailures($email);
         $this->session->regenerateId(true);
         $this->session->set('auth', [
             'id' => (int)$user->id,
@@ -202,6 +214,59 @@ final class AuthController extends ControllerBase
         $this->flashSession->success('Você saiu do sistema.');
 
         return $this->response->redirect('/login');
+    }
+
+    /** Chaves do rate limit → limite de falhas por janela (por IP e por e-mail). */
+    private function loginThrottleLimits(string $email): array
+    {
+        $ip = (string) $this->request->getClientAddress(true);
+        $ip = $ip !== '' ? $ip : 'desconhecido';
+
+        return [
+            'login:fail:ip:' . $ip => self::LOGIN_MAX_PER_IP,
+            'login:fail:email:' . strtolower($email) => self::LOGIN_MAX_PER_EMAIL,
+        ];
+    }
+
+    private function isLoginBlocked(string $email): bool
+    {
+        try {
+            $redis = $this->getDI()->getShared('redis');
+            foreach ($this->loginThrottleLimits($email) as $key => $max) {
+                if ((int) $redis->get($key) >= $max) {
+                    return true;
+                }
+            }
+        } catch (Throwable $e) {
+            // Fail-open: indisponibilidade do Redis não deve impedir logins legítimos.
+            $this->logError('auth.throttle.check', $e);
+        }
+
+        return false;
+    }
+
+    private function registerLoginFailure(string $email): void
+    {
+        try {
+            $redis = $this->getDI()->getShared('redis');
+            foreach (array_keys($this->loginThrottleLimits($email)) as $key) {
+                if ((int) $redis->incr($key) === 1) {
+                    $redis->expire($key, self::LOGIN_WINDOW_SECONDS);
+                }
+            }
+        } catch (Throwable $e) {
+            $this->logError('auth.throttle.register', $e);
+        }
+    }
+
+    private function clearLoginFailures(string $email): void
+    {
+        try {
+            $redis = $this->getDI()->getShared('redis');
+            $redis->del(array_keys($this->loginThrottleLimits($email)));
+        } catch (Throwable $e) {
+            $this->logError('auth.throttle.clear', $e);
+        }
     }
 
     private function isDevelopmentEnvironment(): bool
