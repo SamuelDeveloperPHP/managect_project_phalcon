@@ -97,6 +97,11 @@ final class AuthController extends ControllerBase
 
         $this->flashSession->success('Login realizado com sucesso.');
 
+        // Primeiro login (ou nova versão dos Termos): exige o aceite antes de usar.
+        if (empty($user->terms_accepted_at) || $user->terms_version !== self::CURRENT_TERMS_VERSION) {
+            return $this->response->redirect('/termos/aceite');
+        }
+
         return $this->response->redirect('/dashboard');
     }
 

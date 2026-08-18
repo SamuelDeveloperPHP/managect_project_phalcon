@@ -15,7 +15,11 @@ abstract class ControllerBase extends Controller
 {
     protected bool $requiresAuthentication = true;
     protected bool $requiresAdmin = false;
+    protected bool $requiresTermsAcceptance = true;
     protected ?string $requiredPermission = null;
+
+    /** Versão vigente dos Termos de Uso / Política de Privacidade. Alterar = exigir novo aceite. */
+    public const CURRENT_TERMS_VERSION = '1.0';
 
     public function beforeExecuteRoute(Dispatcher $dispatcher): bool
     {
@@ -50,6 +54,23 @@ abstract class ControllerBase extends Controller
         // Check specific permission requirement if defined
         if ($this->requiredPermission !== null && !$user->hasPermission($this->requiredPermission)) {
             return $this->deny(403, 'Você não possui permissão para acessar esta funcionalidade.');
+        }
+
+        // Portão de aceite dos Termos — vale para TODO usuário (novo ou existente)
+        // que ainda não aceitou a versão vigente. Garante o registro no 1º acesso.
+        if ($this->requiresTermsAcceptance
+            && (empty($user->terms_accepted_at) || $user->terms_version !== self::CURRENT_TERMS_VERSION)) {
+            if (str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/')) {
+                $this->view->disable();
+                $this->response->setStatusCode(403)->setJsonContent([
+                    'success' => false,
+                    'message' => 'É necessário aceitar os Termos de Uso para continuar.',
+                ]);
+            } else {
+                $this->response->redirect('/termos/aceite');
+            }
+
+            return false;
         }
 
         if (!$user->last_seen_at || strtotime((string)$user->last_seen_at) < time() - 60) {

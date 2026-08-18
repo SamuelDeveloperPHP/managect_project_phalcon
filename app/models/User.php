@@ -18,6 +18,9 @@ final class User extends Model
     public $is_active;
     public $last_login_at;
     public $last_seen_at;
+    public $terms_accepted_at;
+    public $terms_version;
+    public $terms_accepted_ip;
     public $deleted_at;
     public $created_at;
     public $updated_at;

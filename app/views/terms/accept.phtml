@@ -1,0 +1,64 @@
+<?php
+/** @var string $csrfToken */
+/** @var string $version */
+/** @var string $userName */
+$csrfToken = $csrfToken ?? '';
+$version = $version ?? '1.0';
+$userName = trim((string)($userName ?? ''));
+$h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+?>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aceite dos Termos | Managect</title>
+    <link rel="stylesheet" href="/assets/legal.css">
+</head>
+<body class="legal-body">
+    <div class="accept-wrap">
+        <div class="accept-card">
+            <h1>Antes de continuar<?= $userName !== '' ? ', ' . $h(explode(' ', $userName)[0]) : '' ?></h1>
+            <p class="sub">Para usar o Managect, você precisa ler e aceitar os Termos de Uso e a Política de Privacidade (versão <?= $h($version) ?>).</p>
+
+            <?php foreach ($this->flashSession->getMessages() as $msgs): ?>
+                <?php foreach ((array) $msgs as $m): ?>
+                    <div class="flash-error"><?= $h((string) $m) ?></div>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+
+            <div class="accept-box">
+                <p><strong>Resumo.</strong> O Managect é uma ferramenta de gestão de projetos fornecida "como está". <strong>Você é responsável pelos dados que insere</strong> — inclusive dados pessoais de terceiros — e declara ter base legal/consentimento para tratá-los, atuando como <strong>Controlador</strong> desses dados (a NexoCore atua como Operadora). A NexoCore não se responsabiliza pelo conteúdo inserido pelos usuários, conforme os Termos.</p>
+                <p>Leia os documentos completos: <a href="/termos" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
+            </div>
+
+            <form method="post" action="/termos/aceite">
+                <input type="hidden" name="csrf_token" value="<?= $h($csrfToken) ?>">
+                <label class="accept-check">
+                    <input type="checkbox" id="accept" name="accept" value="1">
+                    <span>Li e aceito os <strong>Termos de Uso</strong> e a <strong>Política de Privacidade</strong>.</span>
+                </label>
+
+                <div class="accept-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Aceitar e continuar</button>
+                    <a class="link-muted" href="/logout" onclick="event.preventDefault();document.getElementById('logoutForm').submit();">Sair</a>
+                </div>
+            </form>
+
+            <form id="logoutForm" method="post" action="/logout" style="display:none">
+                <input type="hidden" name="csrf_token" value="<?= $h($csrfToken) ?>">
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var c = document.getElementById('accept');
+            var b = document.getElementById('submitBtn');
+            if (c && b) {
+                c.addEventListener('change', function () { b.disabled = !c.checked; });
+            }
+        })();
+    </script>
+</body>
+</html>

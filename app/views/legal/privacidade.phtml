@@ -1,0 +1,88 @@
+<?php
+/** @var string $version */
+/** @var bool $loggedIn */
+$version = $version ?? '1.0';
+$backHref = !empty($loggedIn) ? '/dashboard' : '/login';
+?>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Política de Privacidade | Managect</title>
+    <link rel="stylesheet" href="/assets/legal.css">
+</head>
+<body class="legal-body">
+    <nav class="legal-nav">
+        <div class="wrap">
+            <a class="legal-brand" href="/"><span class="mark">M</span> Managect</a>
+            <a class="back" href="<?= htmlspecialchars($backHref) ?>">&larr; Voltar</a>
+        </div>
+    </nav>
+
+    <main class="legal-main">
+        <article class="legal-card">
+            <h1>Política de Privacidade</h1>
+            <p class="legal-meta">Versão <?= htmlspecialchars($version) ?> · Última atualização: 17 de agosto de 2026</p>
+
+            <p>Esta Política explica como o sistema <strong>Managect</strong> ("Sistema"), disponível em <strong>https://next-project.nexocoretecnologia.com.br</strong>, trata dados pessoais, em conformidade com a <strong>Lei nº 13.709/2018 (LGPD)</strong>. Responsável: <strong>NexoCore Tecnologia LTDA</strong>, CNPJ <strong>[a preencher]</strong> ("NexoCore", "nós").</p>
+
+            <h2>1. Papéis: Controlador e Operador</h2>
+            <p>O Sistema é uma plataforma <strong>multiempresa</strong>. Distinguimos dois papéis definidos pela LGPD:</p>
+            <ul>
+                <li><strong>Dados de cadastro e conta</strong> (do próprio Usuário/empresa contratante): a NexoCore atua como <strong>Controladora</strong>.</li>
+                <li><strong>Dados inseridos por você</strong> sobre projetos, equipes e terceiros (ex.: nomes e e-mails de colaboradores, membros de projeto, arquivos): <strong>você (ou a sua empresa) é o Controlador</strong> desses dados, e a <strong>NexoCore atua como Operadora</strong>, tratando-os exclusivamente conforme as suas instruções.</li>
+            </ul>
+            <p>Portanto, a <strong>responsabilidade pela base legal e pela legalidade dos dados de terceiros que você insere é sua</strong>, como Controlador desses dados (ver <a href="/termos">Termos de Uso</a>, item 3).</p>
+
+            <h2>2. Quais dados tratamos</h2>
+            <p><strong>a) Dados de cadastro e uso (Controladora):</strong> nome, e-mail, empresa e cargo (quando informado); credenciais de acesso (senha armazenada como <em>hash</em>); dados técnicos e de uso: endereço IP, data/hora de acesso, ações no Sistema (<strong>logs de auditoria</strong>), navegador/dispositivo.</p>
+            <p><strong>b) Dados inseridos por você (Operadora):</strong> informações de projetos, tarefas, cronogramas e empresas; dados de membros de equipe/terceiros que você cadastra; <strong>arquivos</strong> enviados, que podem conter dados pessoais sob sua responsabilidade.</p>
+            <p>Não coletamos intencionalmente dados sensíveis nem de crianças e adolescentes; <strong>não insira</strong> dados dessas categorias sem base legal adequada.</p>
+
+            <h2>3. Finalidades e bases legais</h2>
+            <table class="legal-table">
+                <thead><tr><th>Finalidade</th><th>Base legal (LGPD)</th></tr></thead>
+                <tbody>
+                    <tr><td>Criar e manter sua conta; prestar o serviço</td><td>Execução de contrato (art. 7º, V)</td></tr>
+                    <tr><td>Autenticação e segurança da informação</td><td>Legítimo interesse / obrigação legal (art. 7º, IX/II)</td></tr>
+                    <tr><td>Registros de auditoria e prevenção a fraudes</td><td>Legítimo interesse (art. 7º, IX)</td></tr>
+                    <tr><td>Comunicações operacionais do serviço</td><td>Execução de contrato (art. 7º, V)</td></tr>
+                    <tr><td>Cumprimento de obrigações legais</td><td>Obrigação legal (art. 7º, II)</td></tr>
+                    <tr><td>Dados que você insere como Controlador</td><td>Base legal definida <strong>por você</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h2>4. Cookies</h2>
+            <p>Utilizamos cookies <strong>estritamente necessários</strong> para autenticação e funcionamento (ex.: manter a sessão). São essenciais e não exigem consentimento. Cookies opcionais, se vierem a existir, serão informados e poderão ser gerenciados por você.</p>
+
+            <h2>5. Compartilhamento e subprocessadores</h2>
+            <p>Não vendemos dados pessoais. Podemos compartilhá-los com: <strong>Google Cloud Platform (Google LLC)</strong>, onde o Sistema é hospedado; autoridades públicas, quando exigido por lei; e terceiros estritamente necessários à operação, sob obrigações de confidencialidade.</p>
+
+            <h2>6. Transferência internacional de dados</h2>
+            <p>O Sistema é <strong>hospedado em servidores do Google Cloud na região dos Estados Unidos</strong>. Assim, seus dados podem ser <strong>armazenados e tratados fora do Brasil</strong>. Adotamos salvaguardas contratuais e técnicas para proteção adequada, nos termos dos arts. 33 a 36 da LGPD. Ao utilizar o Sistema, você está ciente dessa transferência.</p>
+
+            <h2>7. Segurança</h2>
+            <p>Adotamos medidas técnicas e administrativas razoáveis, incluindo <strong>HTTPS/TLS</strong>, senhas com <em>hash</em>, isolamento entre empresas, acesso restrito e logs de auditoria. Nenhum sistema é 100% seguro; não podemos garantir segurança absoluta.</p>
+
+            <h2>8. Retenção e eliminação</h2>
+            <p>Mantemos os dados pelo tempo necessário às finalidades e a obrigações legais. Encerrada a conta, os dados poderão ser <strong>eliminados ou anonimizados</strong> em prazo razoável, salvo guarda exigida por lei. Como Operadora, eliminamos ou devolvemos os dados inseridos por você conforme suas instruções.</p>
+
+            <h2>9. Direitos do titular (art. 18 da LGPD)</h2>
+            <p>Você pode solicitar, quanto aos dados dos quais a NexoCore é Controladora: <strong>confirmação e acesso</strong>, <strong>correção</strong>, <strong>anonimização/eliminação</strong>, <strong>portabilidade</strong>, informação sobre compartilhamentos e <strong>revogação de consentimento</strong>. Para dados dos quais <strong>outra empresa/usuário é o Controlador</strong> (inseridos por terceiros no Sistema), dirija seu pedido diretamente a essa empresa; atuaremos como Operadora para auxiliá-la.</p>
+
+            <h2>10. Encarregado (DPO) e Contato</h2>
+            <p>Solicitações sobre privacidade e proteção de dados: <strong>privacidade@nexocoretecnologia.com.br</strong>.</p>
+
+            <h2>11. Alterações desta Política</h2>
+            <p>Podemos atualizar esta Política a qualquer tempo. A versão vigente, com a data de atualização, estará sempre disponível no Sistema.</p>
+        </article>
+    </main>
+
+    <div class="legal-footer">
+        <a href="/termos">Termos de Uso</a>
+        <a href="/privacidade">Política de Privacidade</a>
+        <span>© <?= date('Y') ?> NexoCore Tecnologia LTDA</span>
+    </div>
+</body>
+</html>

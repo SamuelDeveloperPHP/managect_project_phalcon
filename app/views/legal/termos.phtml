@@ -1,0 +1,82 @@
+<?php
+/** @var string $version */
+/** @var bool $loggedIn */
+$version = $version ?? '1.0';
+$backHref = !empty($loggedIn) ? '/dashboard' : '/login';
+?>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Termos de Uso | Managect</title>
+    <link rel="stylesheet" href="/assets/legal.css">
+</head>
+<body class="legal-body">
+    <nav class="legal-nav">
+        <div class="wrap">
+            <a class="legal-brand" href="/"><span class="mark">M</span> Managect</a>
+            <a class="back" href="<?= htmlspecialchars($backHref) ?>">&larr; Voltar</a>
+        </div>
+    </nav>
+
+    <main class="legal-main">
+        <article class="legal-card">
+            <h1>Termos de Uso</h1>
+            <p class="legal-meta">Versão <?= htmlspecialchars($version) ?> · Última atualização: 17 de agosto de 2026</p>
+
+            <p>Estes Termos de Uso ("Termos") regulam o acesso e o uso do sistema de gestão de projetos <strong>Managect</strong> ("Sistema"), disponível em <strong>https://next-project.nexocoretecnologia.com.br</strong>, fornecido por <strong>NexoCore Tecnologia LTDA</strong>, inscrita no CNPJ nº <strong>[a preencher]</strong> ("NexoCore", "nós"). Ao criar uma conta ou utilizar o Sistema, você declara que leu, entendeu e concorda com estes Termos e com a <a href="/privacidade">Política de Privacidade</a>.</p>
+
+            <h2>1. Descrição do Serviço</h2>
+            <p>O Sistema é uma plataforma <strong>SaaS multiempresa</strong> de gestão de projetos que permite, entre outras funções: cadastro de empresas e usuários, criação e acompanhamento de projetos e tarefas (incluindo cronogramas/Gantt), gestão de membros de equipe, upload de arquivos e registro de atividades (logs de auditoria). O Sistema é fornecido <strong>"COMO ESTÁ" (<em>as is</em>)</strong> e "conforme disponível", podendo ser alterado, suspenso ou descontinuado a qualquer tempo.</p>
+
+            <h2>2. Cadastro e Conta</h2>
+            <ul>
+                <li>Você é responsável pela veracidade das informações de cadastro e por mantê-las atualizadas.</li>
+                <li>As <strong>credenciais de acesso são pessoais e intransferíveis</strong>. Você é o único responsável pelas atividades realizadas em sua conta e pela guarda de sua senha.</li>
+                <li>Notifique-nos imediatamente em caso de uso não autorizado da sua conta.</li>
+                <li>Você declara ter capacidade legal para aceitar estes Termos e, ao agir em nome de uma empresa, ter poderes para vinculá-la.</li>
+            </ul>
+
+            <h2>3. Conteúdo e Dados Inseridos pelo Usuário</h2>
+            <p>Todo o conteúdo que você insere no Sistema — incluindo dados de projetos, tarefas, membros de equipe, empresas, arquivos e <strong>dados pessoais de terceiros</strong> (como nome, e-mail e informações de colaboradores ou contatos) — é de sua <strong>exclusiva responsabilidade</strong>. Ao inserir dados no Sistema, você declara e garante que:</p>
+            <ol>
+                <li>Possui <strong>base legal, autorização ou consentimento</strong> necessários para inserir e tratar tais dados, inclusive dados pessoais de terceiros, nos termos da <strong>Lei nº 13.709/2018 (LGPD)</strong>;</li>
+                <li>Os dados <strong>não violam</strong> direitos de terceiros, leis aplicáveis, propriedade intelectual, privacidade ou sigilo;</li>
+                <li>É o <strong>Controlador</strong> desses dados (conforme a LGPD), cabendo a você as decisões sobre finalidade e forma de tratamento, enquanto a NexoCore atua como <strong>Operador</strong>, tratando os dados conforme as suas instruções e a Política de Privacidade.</li>
+            </ol>
+            <p>A NexoCore <strong>não se responsabiliza pelo conteúdo e pelos dados inseridos pelos Usuários</strong>, tampouco pela sua veracidade, legalidade, exatidão ou pela obtenção de consentimentos. Você concorda em <strong>indenizar e isentar</strong> a NexoCore de quaisquer reclamações, perdas ou danos decorrentes dos dados que inserir ou do uso que fizer do Sistema.</p>
+
+            <h2>4. Uso Aceitável</h2>
+            <p>Você concorda em <strong>não</strong>: usar o Sistema para fins ilícitos ou que violem direitos de terceiros; inserir conteúdo ilegal, ofensivo ou que contenha malware; acessar contas ou dados de outras empresas/usuários sem autorização; realizar engenharia reversa, sobrecarregar ou comprometer a segurança do Sistema; ou coletar dados de terceiros sem base legal. O descumprimento pode resultar em <strong>suspensão ou encerramento</strong> imediato da conta.</p>
+
+            <h2>5. Propriedade Intelectual</h2>
+            <p>O Sistema, sua marca, código, interface e documentação são de titularidade da NexoCore e protegidos por lei. Estes Termos <strong>não transferem</strong> qualquer direito de propriedade intelectual sobre o Sistema. O conteúdo e os dados que você insere <strong>permanecem seus</strong>; você concede à NexoCore apenas a licença necessária para hospedar, processar e exibir tais dados com o objetivo de prestar o serviço.</p>
+
+            <h2>6. Isenção de Garantias</h2>
+            <p>O Sistema é fornecido <strong>"COMO ESTÁ"</strong>, <strong>sem garantias</strong> de qualquer natureza, expressas ou implícitas, incluindo disponibilidade ininterrupta, ausência de erros ou adequação a um fim específico. Você utiliza o Sistema <strong>por sua conta e risco</strong>.</p>
+
+            <h2>7. Limitação de Responsabilidade</h2>
+            <p>Na máxima extensão permitida pela legislação aplicável, a NexoCore <strong>não será responsável</strong> por: danos indiretos, incidentais, lucros cessantes ou perda de dados; conteúdo, dados ou decisões inseridos ou tomadas pelos Usuários com base no Sistema; indisponibilidades ou falhas decorrentes de terceiros (hospedagem, internet, força maior); ou uso indevido, não autorizado ou em desacordo com estes Termos. Caso alguma responsabilidade venha a ser reconhecida, ela ficará <strong>limitada ao valor efetivamente pago</strong> pelo Usuário à NexoCore nos 12 meses anteriores ao evento, ou, no caso de serviço gratuito, isenta de indenização, na máxima extensão permitida por lei.</p>
+
+            <h2>8. Suspensão e Encerramento</h2>
+            <p>Podemos suspender ou encerrar o acesso em caso de violação destes Termos, exigência legal ou descontinuação do serviço. Você pode encerrar sua conta a qualquer momento. O tratamento de dados após o encerramento seguirá a <a href="/privacidade">Política de Privacidade</a>.</p>
+
+            <h2>9. Alterações dos Termos</h2>
+            <p>Podemos alterar estes Termos a qualquer tempo. A versão vigente estará sempre disponível no Sistema, com a data da última atualização. O uso continuado após alterações significa concordância com a nova versão.</p>
+
+            <h2>10. Legislação Aplicável e Foro</h2>
+            <p>Estes Termos são regidos pelas <strong>leis da República Federativa do Brasil</strong>. Fica eleito o foro da comarca de <strong>[Cidade/UF a preencher]</strong> para dirimir eventuais controvérsias.</p>
+
+            <h2>11. Contato</h2>
+            <p>Dúvidas sobre estes Termos: <strong>contato@nexocoretecnologia.com.br</strong>.</p>
+        </article>
+    </main>
+
+    <div class="legal-footer">
+        <a href="/termos">Termos de Uso</a>
+        <a href="/privacidade">Política de Privacidade</a>
+        <span>© <?= date('Y') ?> NexoCore Tecnologia LTDA</span>
+    </div>
+</body>
+</html>

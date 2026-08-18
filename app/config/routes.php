@@ -69,6 +69,27 @@ return static function (): Router {
     $router->addGet('/companies/cnpj-lookup', ['controller' => 'companies', 'action' => 'cnpjLookup']);
     $router->addGet('/companies/cep-lookup', ['controller' => 'companies', 'action' => 'cepLookup']);
 
+    // Páginas legais (públicas) + portão de aceite dos Termos (logado)
+    $router->addGet('/termos/aceite', [
+        'controller' => 'terms',
+        'action' => 'accept',
+    ])->setName('terms.accept');
+
+    $router->addPost('/termos/aceite', [
+        'controller' => 'terms',
+        'action' => 'store',
+    ])->setName('terms.store');
+
+    $router->addGet('/termos', [
+        'controller' => 'legal',
+        'action' => 'termos',
+    ])->setName('legal.termos');
+
+    $router->addGet('/privacidade', [
+        'controller' => 'legal',
+        'action' => 'privacidade',
+    ])->setName('legal.privacidade');
+
     $router->notFound([
         'controller' => 'error',
         'action' => 'notFound',
