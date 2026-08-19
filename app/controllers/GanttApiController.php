@@ -14,6 +14,11 @@ final class GanttApiController extends ControllerBase
     protected bool $requiresAuthentication = true;
     protected bool $requiresAdmin = false;
 
+    private const MAX_PAYLOAD_BYTES = 1048576; // 1 MB
+    private const MAX_TASKS = 500;
+    private const MAX_DURATION_DAYS = 3650;
+    private const MAX_LEVEL = 20;
+
     public function beforeExecuteRoute(Dispatcher $dispatcher): bool
     {
         $this->view->disable();
@@ -43,31 +48,37 @@ final class GanttApiController extends ControllerBase
                 throw new \RuntimeException('Token de segurança inválido.');
             }
 
-            $payload = (array)$this->request->getJsonRawBody(true);
+            $payload = $this->payload();
             $tasks = $payload['tasks'] ?? [];
 
             if (!is_array($tasks) || count($tasks) === 0) {
                 throw new \RuntimeException('Inclua ao menos uma tarefa no Gantt.');
             }
 
+            if (count($tasks) > self::MAX_TASKS) {
+                throw new \RuntimeException('O cronograma excede o limite de ' . self::MAX_TASKS . ' tarefas.');
+            }
+
             $companyId = $this->currentCompanyId();
             $auth = $this->session->get('auth');
             $userId = is_array($auth) ? (int)$auth['id'] : null;
+            $savedTasks = 0;
 
             $this->db->begin();
             $this->db->execute('DELETE FROM gantt_tasks WHERE project_id = ? AND company_id = ?', [$id, $companyId]);
 
             foreach (array_values($tasks) as $index => $task) {
                 if (!is_array($task)) {
-                    continue;
+                    throw new \RuntimeException('Uma tarefa do Gantt possui formato inválido.');
                 }
 
                 $this->saveTask($id, $companyId, $task, $index, $userId);
+                $savedTasks++;
             }
 
             $this->audit('gantt_saved', 'gantt_tasks', null, 'Cronograma Gantt atualizado', [
                 'project_id' => $id,
-                'tasks' => count($tasks),
+                'tasks' => $savedTasks,
             ]);
 
             $this->db->commit();
@@ -85,6 +96,25 @@ final class GanttApiController extends ControllerBase
         }
     }
 
+    private function payload(): array
+    {
+        $rawBody = (string)$this->request->getRawBody();
+        if ($rawBody === '') {
+            throw new \RuntimeException('Payload JSON vazio.');
+        }
+
+        if (strlen($rawBody) > self::MAX_PAYLOAD_BYTES) {
+            throw new \RuntimeException('Payload do Gantt excede o limite permitido.');
+        }
+
+        $payload = json_decode($rawBody, true);
+        if (!is_array($payload)) {
+            throw new \RuntimeException('Payload JSON inválido.');
+        }
+
+        return $payload;
+    }
+
     private function saveTask(int $projectId, int $companyId, array $data, int $index, ?int $userId): void
     {
         $name = trim((string)($data['name'] ?? ''));
@@ -100,8 +130,14 @@ final class GanttApiController extends ControllerBase
             throw new \RuntimeException('Toda tarefa precisa ter data inicial e final válidas.');
         }
 
+        $startTimestamp = strtotime($start);
+        $endTimestamp = strtotime($end);
+        if ($startTimestamp === false || $endTimestamp === false || $endTimestamp < $startTimestamp) {
+            throw new \RuntimeException('A data final da tarefa não pode ser anterior à data inicial.');
+        }
+
         $progress = max(0, min(100, (int)($data['progress'] ?? 0)));
-        $duration = max(1, (int)($data['duration'] ?? 1));
+        $duration = max(1, min(self::MAX_DURATION_DAYS, (int)($data['duration'] ?? 1)));
 
         $task = new GanttTask();
         $task->assign([
@@ -110,8 +146,8 @@ final class GanttApiController extends ControllerBase
             'code' => $this->cleanText($data['code'] ?? null, 80),
             'name' => $this->cleanText($name, 190),
             'description' => $this->cleanText($data['description'] ?? null, 4000),
-            'level' => max(0, (int)($data['level'] ?? 0)),
-            'status' => $this->cleanText($data['status'] ?? 'STATUS_ACTIVE', 40),
+            'level' => max(0, min(self::MAX_LEVEL, (int)($data['level'] ?? 0))),
+            'status' => $this->statusValue($data['status'] ?? 'STATUS_ACTIVE'),
             'progress' => $progress,
             'start_at' => $start,
             'end_at' => $end,
@@ -298,6 +334,21 @@ final class GanttApiController extends ControllerBase
         }
 
         return mb_substr($text, 0, $limit);
+    }
+
+    private function statusValue(mixed $value): string
+    {
+        $status = (string)$value;
+        $allowed = [
+            'STATUS_ACTIVE',
+            'STATUS_DONE',
+            'STATUS_FAILED',
+            'STATUS_SUSPENDED',
+            'STATUS_WAITING',
+            'STATUS_UNDEFINED',
+        ];
+
+        return in_array($status, $allowed, true) ? $status : 'STATUS_ACTIVE';
     }
 
     private function ok(array $data, int $status = 200)

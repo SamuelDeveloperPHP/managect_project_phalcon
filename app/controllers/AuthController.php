@@ -238,8 +238,11 @@ final class AuthController extends ControllerBase
                 }
             }
         } catch (Throwable $e) {
-            // Fail-open: indisponibilidade do Redis não deve impedir logins legítimos.
             $this->logError('auth.throttle.check', $e);
+
+            // Em producao, falha no controle anti-forca-bruta deve ser segura.
+            // Em dev/local, mantem fail-open para nao travar setup sem Redis.
+            return $this->isProductionEnvironment();
         }
 
         return false;
@@ -282,6 +285,11 @@ final class AuthController extends ControllerBase
         return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
             || str_ends_with($host, '.test')
             || str_ends_with($host, '.local');
+    }
+
+    private function isProductionEnvironment(): bool
+    {
+        return strtolower((string)(getenv('APP_ENV') ?: '')) === 'production';
     }
 
     private function normalizeDomain(string $domain): string

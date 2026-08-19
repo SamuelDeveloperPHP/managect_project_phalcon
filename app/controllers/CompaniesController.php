@@ -6,10 +6,26 @@ namespace App\Controllers;
 
 use App\Models\Company;
 use App\Models\User;
+use Phalcon\Http\Request\FileInterface;
 use Throwable;
 
 final class CompaniesController extends ControllerBase
 {
+    private const ALLOWED_LOGO_MIMES = [
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+    ];
+
+    private const ALLOWED_LOGO_EXTENSIONS = [
+        'png' => ['image/png'],
+        'jpg' => ['image/jpeg'],
+        'jpeg' => ['image/jpeg'],
+        'webp' => ['image/webp'],
+    ];
+
+    private const MAX_LOGO_BYTES = 2097152; // 2 MB
+
     public function profileAction(): void
     {
         $companyId = $this->currentCompanyId();
@@ -115,28 +131,7 @@ final class CompaniesController extends ControllerBase
                 throw new \RuntimeException("O e-mail de recuperação secundário deve possuir o mesmo domínio da empresa (@{$domain}).");
             }
 
-            // Handle Logo Upload
-            if ($this->request->hasFiles()) {
-                foreach ($this->request->getUploadedFiles() as $file) {
-                    if ($file->getKey() === 'logo' && $file->getSize() > 0) {
-                        $ext = strtolower(pathinfo($file->getName(), PATHINFO_EXTENSION));
-                        if (!in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
-                            throw new \RuntimeException('Formato de imagem inválido para a logo. Use PNG, JPG, SVG ou WEBP.');
-                        }
-
-                        $uploadDir = BASE_PATH . '/public/uploads/logos';
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0755, true);
-                        }
-
-                        $filename = 'logo_' . $companyId . '_' . time() . '.' . $ext;
-                        $targetPath = $uploadDir . '/' . $filename;
-                        if ($file->moveTo($targetPath)) {
-                            $company->logo_path = '/uploads/logos/' . $filename;
-                        }
-                    }
-                }
-            }
+            $this->saveLogoUpload($company, $companyId);
 
             $company->name = $name;
             $company->cnpj = $cnpj;
@@ -175,6 +170,71 @@ final class CompaniesController extends ControllerBase
         }
 
         return $this->response->redirect('/companies/profile');
+    }
+
+    private function saveLogoUpload(Company $company, int $companyId): void
+    {
+        if (!$this->request->hasFiles(true)) {
+            return;
+        }
+
+        foreach ($this->request->getUploadedFiles(true) as $file) {
+            if (!$file instanceof FileInterface || $file->getKey() !== 'logo' || (int)$file->getSize() <= 0) {
+                continue;
+            }
+
+            if ($file->getError() !== UPLOAD_ERR_OK) {
+                throw new \RuntimeException('Não foi possível receber o arquivo da logo.');
+            }
+
+            if ((int)$file->getSize() > self::MAX_LOGO_BYTES) {
+                throw new \RuntimeException('A logo excede o limite de 2 MB.');
+            }
+
+            $extension = strtolower(pathinfo((string)$file->getName(), PATHINFO_EXTENSION));
+            if (!isset(self::ALLOWED_LOGO_EXTENSIONS[$extension])) {
+                throw new \RuntimeException('Formato de imagem inválido para a logo. Use PNG, JPG ou WEBP.');
+            }
+
+            $detectedMime = $this->detectMime((string)$file->getTempName());
+            if ($detectedMime === '' || !in_array($detectedMime, self::ALLOWED_LOGO_MIMES, true)) {
+                throw new \RuntimeException('Conteúdo de imagem inválido para a logo.');
+            }
+
+            if (!in_array($detectedMime, self::ALLOWED_LOGO_EXTENSIONS[$extension], true)) {
+                throw new \RuntimeException('A extensão da logo não corresponde ao conteúdo do arquivo.');
+            }
+
+            $uploadDir = dirname(__DIR__, 2) . '/public/uploads/logos';
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+                throw new \RuntimeException('Não foi possível preparar a pasta de logos.');
+            }
+
+            $filename = 'logo_' . $companyId . '_' . bin2hex(random_bytes(12)) . '.' . $extension;
+            $targetPath = $uploadDir . '/' . $filename;
+            if (!$file->moveTo($targetPath)) {
+                throw new \RuntimeException('Não foi possível salvar a logo enviada.');
+            }
+
+            $company->logo_path = '/uploads/logos/' . $filename;
+        }
+    }
+
+    private function detectMime(string $path): string
+    {
+        if ($path === '' || !is_readable($path) || !function_exists('finfo_open')) {
+            return '';
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return '';
+        }
+
+        $mime = (string)finfo_file($finfo, $path);
+        finfo_close($finfo);
+
+        return strtolower($mime);
     }
 
     public function cnpjLookupAction()
