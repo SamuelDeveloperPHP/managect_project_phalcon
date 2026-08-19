@@ -23,15 +23,13 @@ final class UsersApiController extends ControllerBase
     public function indexAction()
     {
         try {
-            $companyId = $this->currentCompanyId();
             $q = trim((string)$this->request->getQuery('q'));
             $page = max(1, (int)$this->request->getQuery('page'));
             $limit = 10;
-            $where = 'company_id = :company_id: AND deleted_at IS NULL';
-            $bind = ['company_id' => $companyId];
+            [$where, $bind] = $this->userScope();
 
             if ($q !== '') {
-                $where .= ' AND (name LIKE :q: OR email LIKE :q:)';
+                $where .= ' AND (name LIKE :q: OR email LIKE :q: OR cpf LIKE :q:)';
                 $bind['q'] = '%' . $q . '%';
             }
 
@@ -48,12 +46,18 @@ final class UsersApiController extends ControllerBase
                 $items[] = $this->item($u);
             }
 
-            return $this->ok([
+            $response = [
                 'users' => $items,
                 'total' => (int)$total,
                 'page' => $page,
                 'pages' => max(1, (int)ceil($total / $limit)),
-            ]);
+            ];
+
+            if ($this->isMasterUser()) {
+                $response['companies'] = $this->companies();
+            }
+
+            return $this->ok($response);
         } catch (Throwable $e) {
             return $this->fail('users.list', $e);
         }
@@ -62,12 +66,11 @@ final class UsersApiController extends ControllerBase
     public function createAction()
     {
         try {
-            $companyId = $this->currentCompanyId();
-            $auth = $this->session->get('auth');
-            $companyDomain = strtolower((string)($auth['company_domain'] ?? ''));
-
             $p = $this->payload();
-            $this->validate($p, true, $companyDomain);
+            $companyId = $this->targetCompanyId($p);
+            $companyDomain = $this->companyDomain($companyId);
+
+            $this->validate($p, true, $companyDomain, null);
 
             $permissions = is_array($p['permissions'] ?? null) ? $p['permissions'] : [];
 
@@ -76,8 +79,9 @@ final class UsersApiController extends ControllerBase
                 'company_id' => $companyId,
                 'name' => trim($p['name']),
                 'email' => strtolower(trim($p['email'])),
+                'cpf' => $this->cpfDigits((string)($p['cpf'] ?? '')),
                 'password' => password_hash($p['password'], PASSWORD_DEFAULT),
-                'role' => in_array($p['role'] ?? 'user', ['admin', 'user'], true) ? $p['role'] : 'user',
+                'role' => $this->roleValue($p['role'] ?? 'user'),
                 'permissions' => json_encode($permissions, JSON_UNESCAPED_UNICODE),
                 'is_active' => 1,
             ]);
@@ -102,16 +106,16 @@ final class UsersApiController extends ControllerBase
     public function updateAction(int $id)
     {
         try {
-            $auth = $this->session->get('auth');
-            $companyDomain = strtolower((string)($auth['company_domain'] ?? ''));
-
             $p = $this->payload();
-            $this->validate($p, false, $companyDomain);
-
             $u = $this->find($id);
+            $this->protectMasterAccount($u);
+            $companyDomain = $this->companyDomain((int)$u->company_id);
+            $this->validate($p, false, $companyDomain, $id);
+
             $u->name = trim($p['name']);
             $u->email = strtolower(trim($p['email']));
-            $u->role = in_array($p['role'] ?? 'user', ['admin', 'user'], true) ? $p['role'] : 'user';
+            $u->cpf = $this->cpfDigits((string)($p['cpf'] ?? ''));
+            $u->role = $this->roleValue($p['role'] ?? 'user', $u);
 
             if (isset($p['permissions']) && is_array($p['permissions'])) {
                 $u->permissions = json_encode($p['permissions'], JSON_UNESCAPED_UNICODE);
@@ -154,6 +158,7 @@ final class UsersApiController extends ControllerBase
             $this->requireCsrfToken();
             $this->protectSelf($id);
             $u = $this->find($id);
+            $this->protectMasterAccount($u);
 
             $this->db->begin();
             $u->is_active = 0;
@@ -177,10 +182,10 @@ final class UsersApiController extends ControllerBase
     public function auditsAction()
     {
         try {
-            $companyId = $this->currentCompanyId();
+            [$where, $bind] = $this->auditScope();
             $rows = AuditLog::find([
-                'conditions' => 'company_id = :company_id:',
-                'bind' => ['company_id' => $companyId],
+                'conditions' => $where,
+                'bind' => $bind,
                 'order' => 'id DESC',
                 'limit' => 50,
             ]);
@@ -208,6 +213,7 @@ final class UsersApiController extends ControllerBase
             $this->requireCsrfToken();
             $this->protectSelf($id);
             $u = $this->find($id);
+            $this->protectMasterAccount($u);
 
             $this->db->begin();
             $u->is_active = $active ? 1 : 0;
@@ -232,8 +238,10 @@ final class UsersApiController extends ControllerBase
         return [
             'id' => (int)$u->id,
             'company_id' => (int)$u->company_id,
+            'company_name' => $u->company ? (string)$u->company->name : '',
             'name' => $u->name,
             'email' => $u->email,
+            'cpf' => $u->cpf,
             'role' => $u->role,
             'permissions' => $u->getPermissionsArray(),
             'is_active' => (bool)$u->is_active,
@@ -248,7 +256,7 @@ final class UsersApiController extends ControllerBase
         return (array)$this->request->getJsonRawBody(true);
     }
 
-    private function validate(array $p, bool $password, string $companyDomain): void
+    private function validate(array $p, bool $password, string $companyDomain, ?int $ignoreUserId): void
     {
         $this->requireCsrfToken();
 
@@ -266,6 +274,13 @@ final class UsersApiController extends ControllerBase
             throw new \RuntimeException("O e-mail do usuário deve possuir o mesmo domínio da empresa (@{$companyDomain}).");
         }
 
+        $cpf = $this->cpfDigits((string)($p['cpf'] ?? ''));
+        if (!$this->isValidCpf($cpf)) {
+            throw new \RuntimeException('Informe um CPF válido para o usuário.');
+        }
+
+        $this->ensureUniqueUserIdentity($email, $cpf, $ignoreUserId);
+
         if (($password || !empty($p['password'])) && strlen($p['password'] ?? '') < 8) {
             throw new \RuntimeException('A senha deve ter pelo menos 8 caracteres.');
         }
@@ -280,11 +295,18 @@ final class UsersApiController extends ControllerBase
 
     private function find(int $id): User
     {
-        $companyId = $this->currentCompanyId();
-        $u = User::findFirst([
-            'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
-            'bind' => ['id' => $id, 'company_id' => $companyId],
-        ]);
+        if ($this->isMasterUser()) {
+            $u = User::findFirst([
+                'conditions' => 'id = :id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id],
+            ]);
+        } else {
+            $companyId = $this->currentCompanyId();
+            $u = User::findFirst([
+                'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL AND role <> :master_role:',
+                'bind' => ['id' => $id, 'company_id' => $companyId, 'master_role' => 'master'],
+            ]);
+        }
 
         if (!$u instanceof User) {
             throw new \RuntimeException('Usuário não encontrado.');
@@ -296,9 +318,151 @@ final class UsersApiController extends ControllerBase
     private function protectSelf(int $id): void
     {
         $a = $this->session->get('auth');
-        if ((int)$a['id'] === $id) {
+        if (is_array($a) && (int)($a['id'] ?? 0) === $id) {
             throw new \RuntimeException('Você não pode bloquear ou excluir sua própria conta.');
         }
+    }
+
+    private function protectMasterAccount(User $user): void
+    {
+        if ((string)$user->role === 'master' && !$this->isMasterUser()) {
+            throw new \RuntimeException('Somente um usuário master pode alterar outro usuário master.');
+        }
+    }
+
+    private function userScope(): array
+    {
+        if ($this->isMasterUser()) {
+            return ['deleted_at IS NULL', []];
+        }
+
+        return [
+            'company_id = :company_id: AND deleted_at IS NULL AND role <> :master_role:',
+            ['company_id' => $this->currentCompanyId(), 'master_role' => 'master'],
+        ];
+    }
+
+    private function auditScope(): array
+    {
+        if ($this->isMasterUser()) {
+            return ['1 = 1', []];
+        }
+
+        return [
+            'company_id = :company_id:',
+            ['company_id' => $this->currentCompanyId()],
+        ];
+    }
+
+    private function targetCompanyId(array $payload): int
+    {
+        $companyId = $this->isMasterUser()
+            ? (int)($payload['company_id'] ?? $this->currentCompanyId())
+            : $this->currentCompanyId();
+
+        $this->companyDomain($companyId);
+
+        return $companyId;
+    }
+
+    private function companyDomain(int $companyId): string
+    {
+        $company = Company::findFirst([
+            'conditions' => 'id = :id: AND deleted_at IS NULL',
+            'bind' => ['id' => $companyId],
+        ]);
+
+        if (!$company instanceof Company) {
+            throw new \RuntimeException('Empresa não encontrada para vincular o usuário.');
+        }
+
+        $this->requireCompanyAccess((int)$company->id);
+
+        return strtolower((string)$company->domain);
+    }
+
+    private function companies(): array
+    {
+        $rows = Company::find([
+            'conditions' => 'deleted_at IS NULL',
+            'order' => 'name ASC',
+        ]);
+
+        $items = [];
+        foreach ($rows as $company) {
+            $items[] = [
+                'id' => (int)$company->id,
+                'name' => (string)$company->name,
+                'domain' => (string)$company->domain,
+            ];
+        }
+
+        return $items;
+    }
+
+    private function roleValue(mixed $value, ?User $current = null): string
+    {
+        $role = (string)$value;
+        if ($role === 'master' && $this->isMasterUser()) {
+            return 'master';
+        }
+
+        if ($current instanceof User && (string)$current->role === 'master') {
+            return 'master';
+        }
+
+        return in_array($role, ['admin', 'user'], true) ? $role : 'user';
+    }
+
+    private function ensureUniqueUserIdentity(string $email, string $cpf, ?int $ignoreUserId): void
+    {
+        $conditions = 'email = :email:';
+        $bind = ['email' => $email];
+        if ($ignoreUserId !== null) {
+            $conditions .= ' AND id <> :id:';
+            $bind['id'] = $ignoreUserId;
+        }
+
+        if (User::findFirst(['conditions' => $conditions, 'bind' => $bind]) instanceof User) {
+            throw new \RuntimeException('Já existe um usuário cadastrado com este e-mail.');
+        }
+
+        $conditions = 'cpf = :cpf:';
+        $bind = ['cpf' => $cpf];
+        if ($ignoreUserId !== null) {
+            $conditions .= ' AND id <> :id:';
+            $bind['id'] = $ignoreUserId;
+        }
+
+        if (User::findFirst(['conditions' => $conditions, 'bind' => $bind]) instanceof User) {
+            throw new \RuntimeException('Já existe um usuário cadastrado com este CPF.');
+        }
+    }
+
+    private function cpfDigits(string $cpf): string
+    {
+        return preg_replace('/\D/', '', $cpf) ?? '';
+    }
+
+    private function isValidCpf(string $cpf): bool
+    {
+        if (!preg_match('/^\d{11}$/', $cpf) || preg_match('/^(\d)\1{10}$/', $cpf)) {
+            return false;
+        }
+
+        for ($t = 9; $t < 11; $t++) {
+            $sum = 0;
+            for ($i = 0; $i < $t; $i++) {
+                $sum += (int)$cpf[$i] * (($t + 1) - $i);
+            }
+
+            $digit = ((10 * $sum) % 11) % 10;
+            if ((int)$cpf[$t] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function ok(array $data, int $status = 200)
