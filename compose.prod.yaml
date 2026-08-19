@@ -23,6 +23,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@phalcon.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+      MASTER_NAME: ${MASTER_NAME:-Administrador Master}
+      MASTER_EMAIL: ${MASTER_EMAIL:-}
+      MASTER_PASSWORD: ${MASTER_PASSWORD:-}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
     depends_on:
