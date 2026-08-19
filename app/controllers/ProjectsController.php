@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\GanttTask;
+use App\Models\Company;
 use App\Models\Project;
 use App\Models\ProjectFile;
 use App\Models\ProjectMember;
@@ -51,10 +52,10 @@ HTACCESS;
 
     public function indexAction(): void
     {
-        $companyId = $this->currentCompanyId();
+        [$conditions, $bind] = $this->projectScope();
         $rows = Project::find([
-            'conditions' => 'company_id = :company_id: AND deleted_at IS NULL',
-            'bind' => ['company_id' => $companyId],
+            'conditions' => $conditions,
+            'bind' => $bind,
             'order' => 'id DESC',
         ]);
 
@@ -90,7 +91,7 @@ HTACCESS;
 
         $project = $this->findProject($id);
         $memberIds = $this->memberIds($id);
-        $companyId = $this->currentCompanyId();
+        $companyId = (int)$project->company_id;
 
         $files = ProjectFile::find([
             'conditions' => 'project_id = :project_id: AND company_id = :company_id:',
@@ -166,7 +167,7 @@ HTACCESS;
                 throw new \RuntimeException('Informe um nome de projeto válido.');
             }
 
-            $companyId = $this->currentCompanyId();
+            $companyId = $this->projectCompanyId($project, $creating);
             $auth = $this->session->get('auth');
             $userId = is_array($auth) ? (int)$auth['id'] : null;
             $leaderId = (int)$this->request->getPost('leader_id');
@@ -231,10 +232,17 @@ HTACCESS;
 
     private function formView(Project $project, array $memberIds, array $files): void
     {
-        $companyId = $this->currentCompanyId();
+        $companyId = (int)($project->company_id ?: $this->currentCompanyId());
+        $userConditions = 'company_id = :company_id: AND deleted_at IS NULL AND is_active = 1';
+        $userBind = ['company_id' => $companyId];
+        if ($this->isMasterUser() && (int)$project->id === 0) {
+            $userConditions = 'deleted_at IS NULL AND is_active = 1';
+            $userBind = [];
+        }
+
         $users = User::find([
-            'conditions' => 'company_id = :company_id: AND deleted_at IS NULL AND is_active = 1',
-            'bind' => ['company_id' => $companyId],
+            'conditions' => $userConditions,
+            'bind' => $userBind,
             'order' => 'name ASC',
         ]);
 
@@ -247,13 +255,15 @@ HTACCESS;
             'users' => iterator_to_array($users),
             'memberIds' => $memberIds,
             'files' => $files,
+            'companies' => $this->isMasterUser() ? $this->companies() : [],
+            'selectedCompanyId' => $companyId,
         ]);
     }
 
     private function projectItem(Project $project): array
     {
         $projectId = (int)$project->id;
-        $companyId = $this->currentCompanyId();
+        $companyId = (int)$project->company_id;
 
         $tasksTotal = (int)GanttTask::count([
             'conditions' => 'project_id = :project_id: AND company_id = :company_id:',
@@ -275,8 +285,9 @@ HTACCESS;
 
         return [
             'model' => $project,
-            'leader' => $this->userName($project->leader_id ? (int)$project->leader_id : null),
-            'members' => $this->members($projectId),
+            'company_name' => $project->company ? (string)$project->company->name : '',
+            'leader' => $this->userName($project->leader_id ? (int)$project->leader_id : null, $companyId),
+            'members' => $this->members($projectId, $companyId),
             'files_count' => (int)ProjectFile::count(['conditions' => 'project_id = :project_id: AND company_id = :company_id:', 'bind' => ['project_id' => $projectId, 'company_id' => $companyId]]),
             'tasks_done' => $tasksDone,
             'tasks_total' => $tasksTotal,
@@ -372,15 +383,24 @@ HTACCESS;
 
     private function findProject(int $id): Project
     {
-        $companyId = $this->currentCompanyId();
-        $project = Project::findFirst([
-            'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
-            'bind' => ['id' => $id, 'company_id' => $companyId],
-        ]);
+        if ($this->isMasterUser()) {
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id],
+            ]);
+        } else {
+            $companyId = $this->currentCompanyId();
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id, 'company_id' => $companyId],
+            ]);
+        }
 
         if (!$project instanceof Project) {
             throw new \RuntimeException('Projeto não encontrado.');
         }
+
+        $this->requireCompanyAccess((int)$project->company_id);
 
         return $project;
     }
@@ -420,12 +440,12 @@ HTACCESS;
         return $valid;
     }
 
-    private function members(int $projectId): array
+    private function members(int $projectId, int $companyId): array
     {
         $ids = $this->memberIds($projectId);
         $names = [];
         foreach ($ids as $id) {
-            $name = $this->userName($id);
+            $name = $this->userName($id, $companyId);
             if ($name !== null) {
                 $names[] = $name;
             }
@@ -433,14 +453,61 @@ HTACCESS;
         return $names;
     }
 
-    private function userName(?int $id): ?string
+    private function userName(?int $id, int $companyId): ?string
     {
         if ($id === null || $id <= 0) {
             return null;
         }
-        $companyId = $this->currentCompanyId();
         $user = User::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' => ['id' => $id, 'company_id' => $companyId]]);
         return $user instanceof User ? (string)$user->name : null;
+    }
+
+    private function projectScope(): array
+    {
+        if ($this->isMasterUser()) {
+            return ['deleted_at IS NULL', []];
+        }
+
+        return [
+            'company_id = :company_id: AND deleted_at IS NULL',
+            ['company_id' => $this->currentCompanyId()],
+        ];
+    }
+
+    private function projectCompanyId(Project $project, bool $creating): int
+    {
+        if (!$this->isMasterUser()) {
+            return $this->currentCompanyId();
+        }
+
+        $companyId = $creating
+            ? (int)$this->request->getPost('company_id')
+            : (int)$project->company_id;
+
+        if ($companyId <= 0) {
+            $companyId = $this->currentCompanyId();
+        }
+
+        $this->requireCompanyAccess($companyId);
+        $company = Company::findFirst([
+            'conditions' => 'id = :id: AND deleted_at IS NULL',
+            'bind' => ['id' => $companyId],
+        ]);
+        if (!$company instanceof Company) {
+            throw new \RuntimeException('Empresa selecionada para o projeto não foi encontrada.');
+        }
+
+        return $companyId;
+    }
+
+    private function companies(): array
+    {
+        $rows = Company::find([
+            'conditions' => 'deleted_at IS NULL',
+            'order' => 'name ASC',
+        ]);
+
+        return iterator_to_array($rows);
     }
 
     private function cleanText(mixed $value, int $limit): ?string

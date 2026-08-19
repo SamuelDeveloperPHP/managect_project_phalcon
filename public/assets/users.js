@@ -2,14 +2,18 @@ const { createApp } = Vue;
 createApp({
     data: () => ({
         users: [],
+        companies: [],
         audits: [],
         search: '',
         loading: false,
         modal: false,
+        isMaster: false,
         form: {
             id: null,
+            company_id: null,
             name: '',
             email: '',
+            cpf: '',
             role: 'user',
             password: '',
             permissions: {
@@ -32,7 +36,11 @@ createApp({
         async loadUsers() {
             this.loading = true;
             try {
-                this.users = (await this.api('/api/users?q=' + encodeURIComponent(this.search))).users;
+                const data = await this.api('/api/users?q=' + encodeURIComponent(this.search));
+                this.users = data.users;
+                if (Array.isArray(data.companies)) {
+                    this.companies = data.companies;
+                }
             } catch (e) {
                 Swal.fire('Erro', e.message, 'error');
             } finally {
@@ -47,8 +55,10 @@ createApp({
         openCreate() {
             this.form = {
                 id: null,
+                company_id: this.companies.length ? this.companies[0].id : null,
                 name: '',
                 email: '',
+                cpf: '',
                 role: 'user',
                 password: '',
                 permissions: {
@@ -62,8 +72,10 @@ createApp({
             const perms = u.permissions || {};
             this.form = {
                 id: u.id,
+                company_id: u.company_id,
                 name: u.name,
                 email: u.email,
+                cpf: u.cpf || '',
                 role: u.role,
                 password: '',
                 permissions: {
@@ -72,6 +84,11 @@ createApp({
                 }
             };
             this.modal = true;
+        },
+        roleLabel(role) {
+            if (role === 'master') return 'Master';
+            if (role === 'admin') return 'Administrador';
+            return 'Usuário';
         },
         async save() {
             try {
@@ -115,6 +132,7 @@ createApp({
         }
     },
     mounted() {
+        this.isMaster = this.$el.dataset.master === '1';
         this.refresh();
     }
 }).mount('#users-app');

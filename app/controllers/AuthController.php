@@ -134,17 +134,21 @@ final class AuthController extends ControllerBase
             }
 
             $companyName = trim((string)$this->request->getPost('company_name'));
+            $cnpj = $this->cnpjDigits((string)$this->request->getPost('cnpj'));
             $domain = $this->normalizeDomain((string)$this->request->getPost('domain'));
             $name = trim((string)$this->request->getPost('name'));
             $email = strtolower(trim((string)$this->request->getPost('email')));
+            $cpf = $this->cpfDigits((string)$this->request->getPost('cpf'));
             $password = (string)$this->request->getPost('password');
             $passwordConfirmation = (string)$this->request->getPost('password_confirmation');
 
             $this->validateDevelopmentRegistration(
                 $companyName,
+                $cnpj,
                 $domain,
                 $name,
                 $email,
+                $cpf,
                 $password,
                 $passwordConfirmation
             );
@@ -152,7 +156,7 @@ final class AuthController extends ControllerBase
             $company = new Company();
             $company->assign([
                 'name' => $companyName,
-                'cnpj' => $this->developmentCompanyCode(),
+                'cnpj' => $cnpj,
                 'domain' => $domain,
                 'contact_name' => $name,
                 'contact_email' => $email,
@@ -172,6 +176,7 @@ final class AuthController extends ControllerBase
                 'company_id' => (int)$company->id,
                 'name' => $name,
                 'email' => $email,
+                'cpf' => $cpf,
                 'password' => password_hash($password, PASSWORD_DEFAULT),
                 'role' => 'admin',
                 'permissions' => json_encode([], JSON_UNESCAPED_UNICODE),
@@ -304,14 +309,20 @@ final class AuthController extends ControllerBase
 
     private function validateDevelopmentRegistration(
         string $companyName,
+        string $cnpj,
         string $domain,
         string $name,
         string $email,
+        string $cpf,
         string $password,
         string $passwordConfirmation
     ): void {
         if (strlen($companyName) < 3) {
             throw new \RuntimeException('Informe o nome do workspace.');
+        }
+
+        if (!$this->isValidCnpj($cnpj)) {
+            throw new \RuntimeException('Informe um CNPJ válido para a empresa.');
         }
 
         if (!preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $domain)) {
@@ -324,6 +335,10 @@ final class AuthController extends ControllerBase
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException('Informe um e-mail valido.');
+        }
+
+        if (!$this->isValidCpf($cpf)) {
+            throw new \RuntimeException('Informe um CPF válido para o administrador.');
         }
 
         $emailDomain = Company::extractDomain($email);
@@ -348,6 +363,33 @@ final class AuthController extends ControllerBase
             throw new \RuntimeException('Ja existe um usuario ativo com este e-mail.');
         }
 
+        $existingCpf = User::findFirst([
+            'conditions' => 'cpf = :cpf:',
+            'bind' => ['cpf' => $cpf],
+        ]);
+
+        if ($existingCpf instanceof User) {
+            throw new \RuntimeException('Ja existe um usuario cadastrado com este CPF.');
+        }
+
+        $existingCnpj = Company::findFirst([
+            'conditions' => 'cnpj = :cnpj: AND deleted_at IS NULL',
+            'bind' => ['cnpj' => $cnpj],
+        ]);
+
+        if ($existingCnpj instanceof Company) {
+            throw new \RuntimeException('Ja existe uma empresa ativa com este CNPJ.');
+        }
+
+        $existingAdminEmail = Company::findFirst([
+            'conditions' => 'admin_recovery_email = :email: AND deleted_at IS NULL',
+            'bind' => ['email' => $email],
+        ]);
+
+        if ($existingAdminEmail instanceof Company) {
+            throw new \RuntimeException('Este e-mail de administrador ja esta vinculado a outro CNPJ.');
+        }
+
         $existingCompany = Company::findFirst([
             'conditions' => 'domain = :domain: AND deleted_at IS NULL',
             'bind' => ['domain' => $domain],
@@ -361,6 +403,64 @@ final class AuthController extends ControllerBase
     private function developmentCompanyCode(): string
     {
         return 'DEV-' . date('ymdHis') . '-' . random_int(10, 99);
+    }
+
+    private function cnpjDigits(string $cnpj): string
+    {
+        return preg_replace('/\D/', '', $cnpj) ?? '';
+    }
+
+    private function cpfDigits(string $cpf): string
+    {
+        return preg_replace('/\D/', '', $cpf) ?? '';
+    }
+
+    private function isValidCnpj(string $cnpj): bool
+    {
+        if (!preg_match('/^\d{14}$/', $cnpj) || preg_match('/^(\d)\1{13}$/', $cnpj)) {
+            return false;
+        }
+
+        $weights = [
+            [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+            [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+        ];
+
+        for ($digit = 12; $digit < 14; $digit++) {
+            $sum = 0;
+            foreach ($weights[$digit - 12] as $index => $weight) {
+                $sum += (int)$cnpj[$index] * $weight;
+            }
+
+            $remainder = $sum % 11;
+            $expected = $remainder < 2 ? 0 : 11 - $remainder;
+            if ((int)$cnpj[$digit] !== $expected) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isValidCpf(string $cpf): bool
+    {
+        if (!preg_match('/^\d{11}$/', $cpf) || preg_match('/^(\d)\1{10}$/', $cpf)) {
+            return false;
+        }
+
+        for ($t = 9; $t < 11; $t++) {
+            $sum = 0;
+            for ($i = 0; $i < $t; $i++) {
+                $sum += (int)$cpf[$i] * (($t + 1) - $i);
+            }
+
+            $digit = ((10 * $sum) % 11) % 10;
+            if ((int)$cpf[$t] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function secondaryRecoveryEmail(string $adminEmail, string $domain): string

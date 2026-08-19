@@ -18,16 +18,25 @@ final class GanttController extends ControllerBase
 
     public function projectAction(int $id)
     {
-        $companyId = $this->currentCompanyId();
-        $project = Project::findFirst([
-            'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
-            'bind' => ['id' => $id, 'company_id' => $companyId],
-        ]);
+        if ($this->isMasterUser()) {
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id],
+            ]);
+        } else {
+            $companyId = $this->currentCompanyId();
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id, 'company_id' => $companyId],
+            ]);
+        }
 
         if (!$project instanceof Project) {
             $this->flashSession->error('Projeto não encontrado.');
             return $this->response->redirect('/projects');
         }
+
+        $this->requireCompanyAccess((int)$project->company_id);
 
         $this->view->setVars([
             'auth' => $this->session->get('auth'),

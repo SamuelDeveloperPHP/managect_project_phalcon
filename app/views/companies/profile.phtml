@@ -32,6 +32,20 @@
 
                 <form action="/companies/profile/update" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" id="selected_company_id" name="company_id" value="<?= (int)$selectedCompanyId ?>">
+
+                    <?php if (($auth['role'] ?? '') === 'master' && !empty($companies)): ?>
+                        <div style="margin-bottom: 20px;">
+                            <label for="company-selector" style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569;">Empresa em edição</label>
+                            <select id="company-selector" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                <?php foreach ($companies as $listedCompany): ?>
+                                    <option value="<?= (int)$listedCompany->id ?>" <?= (int)$selectedCompanyId === (int)$listedCompany->id ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars((string)$listedCompany->name, ENT_QUOTES, 'UTF-8') ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Seção 1: Dados Principais e Busca CNPJ -->
                     <h3 style="font-size: 16px; color: #334155; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
@@ -176,6 +190,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnCnpj = document.getElementById('btn-cnpj-lookup');
     const btnCep = document.getElementById('btn-cep-lookup');
+    const companySelector = document.getElementById('company-selector');
+    const selectedCompanyId = document.getElementById('selected_company_id');
+
+    if (companySelector && selectedCompanyId) {
+        companySelector.addEventListener('change', function() {
+            window.location.href = '/companies/profile?company_id=' + encodeURIComponent(companySelector.value);
+        });
+    }
 
     btnCnpj.addEventListener('click', async function() {
         const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
@@ -188,7 +210,8 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCnpj.textContent = 'Buscando...';
 
         try {
-            const resp = await fetch('/companies/cnpj-lookup?cnpj=' + cnpj);
+            const companyParam = selectedCompanyId ? '&company_id=' + encodeURIComponent(selectedCompanyId.value) : '';
+            const resp = await fetch('/companies/cnpj-lookup?cnpj=' + cnpj + companyParam);
             const json = await resp.json();
 
             if (json.success && json.data) {
