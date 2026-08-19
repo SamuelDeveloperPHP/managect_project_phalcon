@@ -28,8 +28,8 @@ final class GanttApiController extends ControllerBase
     public function indexAction(int $id)
     {
         try {
-            $this->findProject($id);
-            return $this->ok(['project' => $this->project($id)]);
+            $project = $this->findProject($id);
+            return $this->ok(['project' => $this->project($project)]);
         } catch (Throwable $e) {
             return $this->fail('gantt.load', $e);
         }
@@ -38,7 +38,7 @@ final class GanttApiController extends ControllerBase
     public function saveAction(int $id)
     {
         try {
-            $this->findProject($id);
+            $project = $this->findProject($id);
 
             if (!$this->hasPermission('can_manage_projects')) {
                 throw new \RuntimeException('Você não possui permissão para alterar o cronograma de projetos.');
@@ -59,7 +59,7 @@ final class GanttApiController extends ControllerBase
                 throw new \RuntimeException('O cronograma excede o limite de ' . self::MAX_TASKS . ' tarefas.');
             }
 
-            $companyId = $this->currentCompanyId();
+            $companyId = (int)$project->company_id;
             $auth = $this->session->get('auth');
             $userId = is_array($auth) ? (int)$auth['id'] : null;
             $savedTasks = 0;
@@ -84,7 +84,7 @@ final class GanttApiController extends ControllerBase
             $this->db->commit();
 
             return $this->ok([
-                'project' => $this->project($id),
+                'project' => $this->project($project),
                 'message' => 'Cronograma salvo com sucesso.',
             ]);
         } catch (Throwable $e) {
@@ -166,9 +166,10 @@ final class GanttApiController extends ControllerBase
         }
     }
 
-    private function project(int $projectId): array
+    private function project(Project $project): array
     {
-        $companyId = $this->currentCompanyId();
+        $projectId = (int)$project->id;
+        $companyId = (int)$project->company_id;
         $rows = GanttTask::find([
             'conditions' => 'project_id = :project_id: AND company_id = :company_id:',
             'bind' => ['project_id' => $projectId, 'company_id' => $companyId],
@@ -286,15 +287,24 @@ final class GanttApiController extends ControllerBase
 
     private function findProject(int $id): Project
     {
-        $companyId = $this->currentCompanyId();
-        $project = Project::findFirst([
-            'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
-            'bind' => ['id' => $id, 'company_id' => $companyId],
-        ]);
+        if ($this->isMasterUser()) {
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id],
+            ]);
+        } else {
+            $companyId = $this->currentCompanyId();
+            $project = Project::findFirst([
+                'conditions' => 'id = :id: AND company_id = :company_id: AND deleted_at IS NULL',
+                'bind' => ['id' => $id, 'company_id' => $companyId],
+            ]);
+        }
 
         if (!$project instanceof Project) {
             throw new \RuntimeException('Projeto não encontrado.');
         }
+
+        $this->requireCompanyAccess((int)$project->company_id);
 
         return $project;
     }
