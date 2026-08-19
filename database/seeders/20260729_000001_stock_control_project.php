@@ -4,19 +4,47 @@ declare(strict_types=1);
 
 return static function (PDO $pdo): void {
     $projectCode = 'ESTOQUE-001';
-    $adminId = $pdo
-        ->query("SELECT id FROM users WHERE email = 'admin@phalcon.local' LIMIT 1")
-        ->fetchColumn();
-    $adminId = $adminId !== false ? (int)$adminId : null;
+    $user = $pdo
+        ->query(
+            "SELECT id, company_id
+             FROM users
+             WHERE deleted_at IS NULL
+             ORDER BY CASE
+                 WHEN role = 'master' THEN 0
+                 WHEN role = 'admin' THEN 1
+                 ELSE 2
+             END, id
+             LIMIT 1"
+        )
+        ->fetch(PDO::FETCH_ASSOC);
+    $adminId = $user !== false ? (int)$user['id'] : null;
+    $companyId = $user !== false && $user['company_id'] !== null
+        ? (int)$user['company_id']
+        : null;
+
+    if ($companyId === null) {
+        $companyId = $pdo
+            ->query('SELECT id FROM companies ORDER BY id LIMIT 1')
+            ->fetchColumn();
+        $companyId = $companyId !== false ? (int)$companyId : null;
+    }
+
+    if ($companyId === null) {
+        throw new RuntimeException('No company found for stock control project seeder.');
+    }
 
     $projectStatement = $pdo->prepare(
         'SELECT id, start_date
          FROM projects
          WHERE code = :code
+           AND company_id = :company_id
          ORDER BY id
          LIMIT 1'
     );
-    $projectStatement->execute(['code' => $projectCode]);
+    $projectStatement->execute([
+        'code' => $projectCode,
+        'company_id' => $companyId,
+    ]);
     $project = $projectStatement->fetch();
 
     $nextMonday = new DateTimeImmutable('monday this week');
@@ -43,6 +71,7 @@ return static function (PDO $pdo): void {
 
     $projectEnd = $addBusinessDays($projectStart, 24);
     $projectData = [
+        'company_id' => $companyId,
         'name' => 'Desenvolver um controle de estoque',
         'code' => $projectCode,
         'client' => 'Projeto demonstrativo',
@@ -60,10 +89,10 @@ return static function (PDO $pdo): void {
     if ($project === false) {
         $insertProject = $pdo->prepare(
             'INSERT INTO projects (
-                name, code, client, description, status, priority, leader_id,
+                company_id, name, code, client, description, status, priority, leader_id,
                 start_date, deadline, budget, created_by, updated_by
             ) VALUES (
-                :name, :code, :client, :description, :status, :priority, :leader_id,
+                :company_id, :name, :code, :client, :description, :status, :priority, :leader_id,
                 :start_date, :deadline, :budget, :created_by, :updated_by
             )'
         );
@@ -73,6 +102,7 @@ return static function (PDO $pdo): void {
         $projectId = (int)$project['id'];
         $updateProject = $pdo->prepare(
             'UPDATE projects SET
+                company_id = :company_id,
                 name = :name,
                 client = :client,
                 description = :description,
@@ -87,6 +117,7 @@ return static function (PDO $pdo): void {
              WHERE id = :id'
         );
         $updateProject->execute([
+            'company_id' => $projectData['company_id'],
             'name' => $projectData['name'],
             'client' => $projectData['client'],
             'description' => $projectData['description'],
@@ -126,23 +157,26 @@ return static function (PDO $pdo): void {
 
     $findTask = $pdo->prepare(
         'SELECT id FROM gantt_tasks
-         WHERE project_id = :project_id AND code = :code
+         WHERE company_id = :company_id
+           AND project_id = :project_id
+           AND code = :code
          ORDER BY id
          LIMIT 1'
     );
     $insertTask = $pdo->prepare(
         'INSERT INTO gantt_tasks (
-            project_id, code, name, description, level, status, progress,
+            company_id, project_id, code, name, description, level, status, progress,
             start_at, end_at, duration, depends, sort_order, collapsed,
             start_is_milestone, end_is_milestone, created_by, updated_by
         ) VALUES (
-            :project_id, :code, :name, :description, :level, :status, :progress,
+            :company_id, :project_id, :code, :name, :description, :level, :status, :progress,
             :start_at, :end_at, :duration, :depends, :sort_order, 0,
             :start_is_milestone, :end_is_milestone, :created_by, :updated_by
         )'
     );
     $updateTask = $pdo->prepare(
         'UPDATE gantt_tasks SET
+            company_id = :company_id,
             name = :name,
             description = :description,
             level = :level,
@@ -167,6 +201,7 @@ return static function (PDO $pdo): void {
         $isMilestone = $code === 'EST-070' ? 1 : 0;
 
         $taskData = [
+            'company_id' => $companyId,
             'project_id' => $projectId,
             'code' => $code,
             'name' => $name,
@@ -186,6 +221,7 @@ return static function (PDO $pdo): void {
         ];
 
         $findTask->execute([
+            'company_id' => $companyId,
             'project_id' => $projectId,
             'code' => $code,
         ]);

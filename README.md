@@ -21,6 +21,9 @@ docker compose up -d
 ```
 
 Antes de subir o ambiente, altere no `.env` as senhas de `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` e `ADMIN_PASSWORD`.
+Se quiser um superadministrador separado, defina tambem `MASTER_EMAIL`,
+`MASTER_PASSWORD` e `MASTER_NAME`. Se `MASTER_EMAIL` ficar vazio, o usuario de
+`ADMIN_EMAIL` sera promovido para `master` pelas migrations.
 
 Confira se os containers estao rodando:
 
@@ -123,6 +126,9 @@ http://localhost:8081
 E-mail: valor de ADMIN_EMAIL no .env
 Senha: valor de ADMIN_PASSWORD no .env
 ```
+
+Se `MASTER_EMAIL` e `MASTER_PASSWORD` estiverem definidos, use esses valores
+para acessar com permissao total (`master`).
 
 ## Banco de dados
 
