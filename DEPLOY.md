@@ -160,6 +160,12 @@ MYSQL_ROOT_PASSWORD=<outra_senha_forte>
 ADMIN_EMAIL=seu-admin@dominio.com.br
 ADMIN_PASSWORD=<senha_forte_do_admin>
 
+# Opcional: superadministrador com acesso total.
+# Se vazio, ADMIN_EMAIL/ADMIN_PASSWORD serao promovidos para master.
+MASTER_NAME=Seu Nome
+MASTER_EMAIL=seu-master@dominio.com.br
+MASTER_PASSWORD=<senha_forte_do_master>
+
 DOMAIN=seudominio.com.br
 ACME_EMAIL=voce@seudominio.com.br
 

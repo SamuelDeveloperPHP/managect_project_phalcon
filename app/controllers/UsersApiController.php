@@ -151,6 +151,7 @@ final class UsersApiController extends ControllerBase
     public function deleteAction(int $id)
     {
         try {
+            $this->requireCsrfToken();
             $this->protectSelf($id);
             $u = $this->find($id);
 
@@ -204,6 +205,7 @@ final class UsersApiController extends ControllerBase
     private function status(int $id, bool $active)
     {
         try {
+            $this->requireCsrfToken();
             $this->protectSelf($id);
             $u = $this->find($id);
 
@@ -248,9 +250,7 @@ final class UsersApiController extends ControllerBase
 
     private function validate(array $p, bool $password, string $companyDomain): void
     {
-        if (!$this->hasValidCsrfToken()) {
-            throw new \RuntimeException('Token de segurança inválido.');
-        }
+        $this->requireCsrfToken();
 
         if (strlen(trim($p['name'] ?? '')) < 3) {
             throw new \RuntimeException('Informe um nome válido.');
@@ -268,6 +268,13 @@ final class UsersApiController extends ControllerBase
 
         if (($password || !empty($p['password'])) && strlen($p['password'] ?? '') < 8) {
             throw new \RuntimeException('A senha deve ter pelo menos 8 caracteres.');
+        }
+    }
+
+    private function requireCsrfToken(): void
+    {
+        if (!$this->hasValidCsrfToken()) {
+            throw new \RuntimeException('Token de segurança inválido.');
         }
     }
 
