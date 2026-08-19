@@ -28,7 +28,7 @@ final class CompaniesController extends ControllerBase
 
     public function profileAction(): void
     {
-        $companyId = $this->currentCompanyId();
+        $companyId = $this->requestedCompanyId();
         $company = Company::findFirst([
             'conditions' => 'id = :id: AND deleted_at IS NULL',
             'bind' => ['id' => $companyId],
@@ -45,6 +45,8 @@ final class CompaniesController extends ControllerBase
             'csrfToken' => $this->csrfToken(),
             'pageTitle' => 'Perfil da Empresa',
             'company' => $company,
+            'companies' => $this->isMasterUser() ? $this->companies() : [],
+            'selectedCompanyId' => $companyId,
         ]);
     }
 
@@ -64,7 +66,7 @@ final class CompaniesController extends ControllerBase
                 throw new \RuntimeException('Somente o Administrador da empresa pode atualizar as configurações.');
             }
 
-            $companyId = $this->currentCompanyId();
+            $companyId = $this->requestedCompanyId(true);
             $company = Company::findFirst([
                 'conditions' => 'id = :id: AND deleted_at IS NULL',
                 'bind' => ['id' => $companyId],
@@ -75,7 +77,7 @@ final class CompaniesController extends ControllerBase
             }
 
             $name = trim((string)$this->request->getPost('name'));
-            $cnpj = trim((string)$this->request->getPost('cnpj'));
+            $cnpj = $this->cnpjDigits((string)$this->request->getPost('cnpj'));
             $domain = strtolower(trim((string)$this->request->getPost('domain')));
 
             $contactName = trim((string)$this->request->getPost('contact_name'));
@@ -95,6 +97,10 @@ final class CompaniesController extends ControllerBase
 
             if ($name === '' || $cnpj === '' || $domain === '') {
                 throw new \RuntimeException('Nome, CNPJ e Domínio da empresa são obrigatórios.');
+            }
+
+            if (!$this->isValidCnpj($cnpj)) {
+                throw new \RuntimeException('Informe um CNPJ válido.');
             }
 
             if ($contactName === '' || $contactEmail === '' || $contactWhatsapp === '') {
@@ -131,6 +137,7 @@ final class CompaniesController extends ControllerBase
                 throw new \RuntimeException("O e-mail de recuperação secundário deve possuir o mesmo domínio da empresa (@{$domain}).");
             }
 
+            $this->ensureUniqueCompanyData((int)$company->id, $cnpj, $domain, $adminRecoveryEmail);
             $this->saveLogoUpload($company, $companyId);
 
             $company->name = $name;
@@ -169,7 +176,99 @@ final class CompaniesController extends ControllerBase
             $this->flashSession->error($e->getMessage());
         }
 
-        return $this->response->redirect('/companies/profile');
+        $suffix = $this->isMasterUser() && isset($companyId) && (int)$companyId > 0
+            ? '?company_id=' . (int)$companyId
+            : '';
+
+        return $this->response->redirect('/companies/profile' . $suffix);
+    }
+
+    private function requestedCompanyId(bool $fromPost = false): int
+    {
+        if (!$this->isMasterUser()) {
+            return $this->currentCompanyId();
+        }
+
+        $companyId = $fromPost
+            ? (int)$this->request->getPost('company_id')
+            : (int)$this->request->getQuery('company_id');
+
+        if ($companyId <= 0) {
+            $companyId = $this->currentCompanyId();
+        }
+
+        $this->requireCompanyAccess($companyId);
+
+        return $companyId;
+    }
+
+    private function companies(): array
+    {
+        $rows = Company::find([
+            'conditions' => 'deleted_at IS NULL',
+            'order' => 'name ASC',
+        ]);
+
+        return iterator_to_array($rows);
+    }
+
+    private function ensureUniqueCompanyData(int $companyId, string $cnpj, string $domain, string $adminEmail): void
+    {
+        $existingCnpj = Company::findFirst([
+            'conditions' => 'cnpj = :cnpj: AND id <> :id: AND deleted_at IS NULL',
+            'bind' => ['cnpj' => $cnpj, 'id' => $companyId],
+        ]);
+        if ($existingCnpj instanceof Company) {
+            throw new \RuntimeException('Já existe uma empresa ativa cadastrada com este CNPJ.');
+        }
+
+        $existingDomain = Company::findFirst([
+            'conditions' => 'domain = :domain: AND id <> :id: AND deleted_at IS NULL',
+            'bind' => ['domain' => $domain, 'id' => $companyId],
+        ]);
+        if ($existingDomain instanceof Company) {
+            throw new \RuntimeException('Já existe uma empresa ativa cadastrada com este domínio.');
+        }
+
+        $existingAdmin = Company::findFirst([
+            'conditions' => 'admin_recovery_email = :email: AND id <> :id: AND deleted_at IS NULL',
+            'bind' => ['email' => $adminEmail, 'id' => $companyId],
+        ]);
+        if ($existingAdmin instanceof Company) {
+            throw new \RuntimeException('Este e-mail de administrador já está vinculado a outro CNPJ.');
+        }
+    }
+
+    private function cnpjDigits(string $cnpj): string
+    {
+        return preg_replace('/\D/', '', $cnpj) ?? '';
+    }
+
+    private function isValidCnpj(string $cnpj): bool
+    {
+        if (!preg_match('/^\d{14}$/', $cnpj) || preg_match('/^(\d)\1{13}$/', $cnpj)) {
+            return false;
+        }
+
+        $weights = [
+            [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+            [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+        ];
+
+        for ($digit = 12; $digit < 14; $digit++) {
+            $sum = 0;
+            foreach ($weights[$digit - 12] as $index => $weight) {
+                $sum += (int)$cnpj[$index] * $weight;
+            }
+
+            $remainder = $sum % 11;
+            $expected = $remainder < 2 ? 0 : 11 - $remainder;
+            if ((int)$cnpj[$digit] !== $expected) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function saveLogoUpload(Company $company, int $companyId): void
@@ -246,6 +345,25 @@ final class CompaniesController extends ControllerBase
                 return $this->response->setStatusCode(422)->setJsonContent([
                     'success' => false,
                     'message' => 'CNPJ inválido. Informe 14 dígitos.',
+                ]);
+            }
+
+            if (!$this->isValidCnpj($cnpj)) {
+                return $this->response->setStatusCode(422)->setJsonContent([
+                    'success' => false,
+                    'message' => 'CNPJ inválido.',
+                ]);
+            }
+
+            $currentCompanyId = $this->requestedCompanyId();
+            $existing = Company::findFirst([
+                'conditions' => 'cnpj = :cnpj: AND id <> :id: AND deleted_at IS NULL',
+                'bind' => ['cnpj' => $cnpj, 'id' => $currentCompanyId],
+            ]);
+            if ($existing instanceof Company) {
+                return $this->response->setStatusCode(409)->setJsonContent([
+                    'success' => false,
+                    'message' => 'Este CNPJ já está cadastrado em outra empresa.',
                 ]);
             }
 

@@ -12,6 +12,7 @@ final class User extends Model
     public $company_id;
     public $name;
     public $email;
+    public $cpf;
     public $password;
     public $role;
     public $permissions;

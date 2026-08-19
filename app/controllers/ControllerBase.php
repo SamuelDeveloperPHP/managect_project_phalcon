@@ -99,6 +99,25 @@ abstract class ControllerBase extends Controller
         return is_array($auth) ? (int)($auth['company_id'] ?? 0) : 0;
     }
 
+    protected function isMasterUser(): bool
+    {
+        $auth = $this->session->get('auth');
+
+        return is_array($auth) && ($auth['role'] ?? '') === 'master';
+    }
+
+    protected function canAccessCompany(int $companyId): bool
+    {
+        return $companyId > 0 && ($this->isMasterUser() || $this->currentCompanyId() === $companyId);
+    }
+
+    protected function requireCompanyAccess(int $companyId): void
+    {
+        if (!$this->canAccessCompany($companyId)) {
+            throw new \RuntimeException('Você não possui permissão para acessar dados desta empresa.');
+        }
+    }
+
     protected function hasPermission(string $permissionKey): bool
     {
         $auth = $this->session->get('auth');
