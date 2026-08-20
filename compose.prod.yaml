@@ -2,7 +2,7 @@ services:
   app:
     # Imagem pronta, compilada no Cloud Build e publicada no Artifact Registry.
     # A VM apenas baixa (pull) — nao compila nada. Defina APP_IMAGE no .env.
-    image: "${APP_IMAGE:?Defina APP_IMAGE no .env, ex REGIAO-docker.pkg.dev/SEU_PROJETO/phalcon/app:latest}"
+    image: "${APP_IMAGE:?Defina APP_IMAGE no .env, ex REGIAO-docker.pkg.dev/SEU_PROJETO/phalcon/app:SHORT_SHA}"
     container_name: phalcon_app
     restart: unless-stopped
     # Sem "ports" publicos: quem fala com a internet e o Caddy.
@@ -16,6 +16,7 @@ services:
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
     environment:
       APP_ENV: ${APP_ENV:-production}
+      APP_URL: ${APP_URL:?Defina APP_URL no .env, ex https://seudominio.com.br}
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_DATABASE: ${DB_DATABASE:-phalcon}
@@ -28,11 +29,29 @@ services:
       MASTER_PASSWORD: ${MASTER_PASSWORD:-}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
+      LEGAL_APP_URL: ${LEGAL_APP_URL:?Defina LEGAL_APP_URL no .env, normalmente igual a APP_URL}
+      LEGAL_COMPANY_NAME: ${LEGAL_COMPANY_NAME:?Defina LEGAL_COMPANY_NAME no .env}
+      LEGAL_COMPANY_CNPJ: ${LEGAL_COMPANY_CNPJ:?Defina LEGAL_COMPANY_CNPJ no .env}
+      LEGAL_FORUM: ${LEGAL_FORUM:?Defina LEGAL_FORUM no .env}
+      LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:?Defina LEGAL_CONTACT_EMAIL no .env}
+      LEGAL_PRIVACY_EMAIL: ${LEGAL_PRIVACY_EMAIL:?Defina LEGAL_PRIVACY_EMAIL no .env}
+      LEGAL_HOSTING_REGION: ${LEGAL_HOSTING_REGION:?Defina LEGAL_HOSTING_REGION no .env}
+      LEGAL_UPDATED_AT: ${LEGAL_UPDATED_AT:-20 de agosto de 2026}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php -r \"exit(@file_get_contents('http://127.0.0.1/healthz') === false ? 1 : 0);\""
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - phalcon_network
 
@@ -52,7 +71,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - phalcon_network
 
@@ -91,6 +111,11 @@ services:
     # Sem "ports": Redis somente na rede interna.
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - phalcon_network
 
