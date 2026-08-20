@@ -14,6 +14,7 @@ services:
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
     environment:
       APP_ENV: ${APP_ENV:-development}
+      APP_URL: ${APP_URL:-http://localhost:8080}
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_DATABASE: ${DB_DATABASE:-phalcon}
@@ -26,11 +27,29 @@ services:
       MASTER_PASSWORD: ${MASTER_PASSWORD:-}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
+      LEGAL_APP_URL: ${LEGAL_APP_URL:-http://localhost:8080}
+      LEGAL_COMPANY_NAME: ${LEGAL_COMPANY_NAME:-NexoCore Tecnologia LTDA}
+      LEGAL_COMPANY_CNPJ: ${LEGAL_COMPANY_CNPJ:-a_preencher}
+      LEGAL_FORUM: ${LEGAL_FORUM:-Cidade/UF a preencher}
+      LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:-contato@nexocoretecnologia.com.br}
+      LEGAL_PRIVACY_EMAIL: ${LEGAL_PRIVACY_EMAIL:-privacidade@nexocoretecnologia.com.br}
+      LEGAL_HOSTING_REGION: ${LEGAL_HOSTING_REGION:-Google Cloud, regiao a definir}
+      LEGAL_UPDATED_AT: ${LEGAL_UPDATED_AT:-20 de agosto de 2026}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php -r \"exit(@file_get_contents('http://127.0.0.1/healthz') === false ? 1 : 0);\""
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - phalcon_network
 
@@ -71,6 +90,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - phalcon_network
 
