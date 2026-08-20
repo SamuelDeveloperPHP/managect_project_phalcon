@@ -14,9 +14,9 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Managect | Gestao de projetos e tarefas</title>
-    <meta name="description" content="Managect organiza projetos, tarefas, equipes e cronogramas com Gantt em um workspace simples para acompanhar entregas.">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2312342f'/%3E%3Cpath d='M17 42V20h8l7 10 7-10h8v22h-7V30l-6 8h-4l-6-8v12z' fill='%237dd3a8'/%3E%3C/svg%3E">
+    <title>Managect | Gestao multiempresa de projetos</title>
+    <meta name="description" content="Managect organiza empresas, projetos, tarefas, responsaveis e cronogramas Gantt em um painel administrativo claro e seguro.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101827'/%3E%3Cpath d='M17 43V20h8l7 10 7-10h8v23h-7V31l-6 8h-4l-6-8v12z' fill='%232563eb'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="/assets/landing.css">
 </head>
 <body class="landing-body">
@@ -45,13 +45,14 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
     </header>
 
     <main id="top">
-        <section class="hero-section">
-            <div class="landing-wrap hero-grid">
+        <section class="hero-section" aria-labelledby="hero-title">
+            <div class="landing-wrap hero-shell">
                 <div class="hero-copy">
-                    <p class="eyebrow">Projetos, tarefas e cronogramas</p>
-                    <h1>Gestao de projetos com Gantt, tarefas e equipes.</h1>
+                    <p class="eyebrow">Sistema multiempresa</p>
+                    <h1 id="hero-title">Managect</h1>
+                    <p class="hero-kicker">Gestao de projetos com Gantt, tarefas e permissoes por empresa.</p>
                     <p class="hero-sub">
-                        O Managect centraliza planejamento, responsaveis, prazos e execucao em um ambiente claro para times que precisam entregar sem depender de planilhas soltas.
+                        Centralize empresas, usuarios, responsaveis, prazos e execucao em uma rotina visual que separa o acesso do administrador master, dos administradores de empresa e das equipes.
                     </p>
 
                     <div class="hero-actions">
@@ -67,70 +68,90 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 
                     <dl class="hero-metrics" aria-label="Resumo do Managect">
                         <div>
-                            <dt>Gantt</dt>
-                            <dd>Linha do tempo</dd>
-                        </div>
-                        <div>
                             <dt>Multiempresa</dt>
-                            <dd>Workspaces isolados</dd>
+                            <dd>Dados isolados por empresa</dd>
                         </div>
                         <div>
-                            <dt>R$ 0</dt>
-                            <dd>Ambiente livre</dd>
+                            <dt>Gantt</dt>
+                            <dd>Cronograma e dependencias</dd>
+                        </div>
+                        <div>
+                            <dt>Alertas</dt>
+                            <dd>Informacoes para usuarios</dd>
                         </div>
                     </dl>
                 </div>
 
-                <div class="project-preview" aria-label="Previa de painel de projeto">
-                    <div class="preview-top">
-                        <div class="preview-title">
-                            <span class="brand-mark small">P</span>
+                <div class="workspace-preview" aria-label="Previa do painel Managect">
+                    <div class="preview-topbar">
+                        <div class="preview-company">
+                            <span class="preview-logo">E</span>
                             <div>
-                                <strong>Portal do Cliente</strong>
-                                <small>Sprint 04 · agosto</small>
+                                <strong>Empresa Principal</strong>
+                                <small>Administrador Master</small>
                             </div>
                         </div>
-                        <span class="preview-badge">68%</span>
+                        <span class="preview-pill">Acesso global</span>
                     </div>
 
-                    <div class="preview-progress"><span style="width: 68%"></span></div>
+                    <div class="preview-grid">
+                        <aside class="preview-menu" aria-hidden="true">
+                            <span class="preview-menu-label">Menu</span>
+                            <span class="preview-menu-item is-active">Dashboard</span>
+                            <span class="preview-menu-item">Projetos & Gantt</span>
+                            <span class="preview-menu-item">Usuarios</span>
+                            <span class="preview-menu-item">Dados da Empresa</span>
+                        </aside>
 
-                    <div class="task-stack">
-                        <div class="task-row done">
-                            <span></span>
-                            <p>Escopo aprovado</p>
-                            <small>Concluido</small>
-                        </div>
-                        <div class="task-row active">
-                            <span></span>
-                            <p>Gantt e dependencias</p>
-                            <small>Hoje</small>
-                        </div>
-                        <div class="task-row">
-                            <span></span>
-                            <p>Teste com equipe</p>
-                            <small>Proximo</small>
-                        </div>
-                    </div>
+                        <div class="preview-content">
+                            <div class="preview-heading">
+                                <div>
+                                    <span class="preview-eyebrow">Visao geral</span>
+                                    <strong>Rotina administrativa</strong>
+                                </div>
+                                <span class="preview-status">Online</span>
+                            </div>
 
-                    <div class="gantt-mini">
-                        <div class="gantt-head">
-                            <span></span>
-                            <span>Sem 1</span>
-                            <span>Sem 2</span>
-                            <span>Sem 3</span>
-                        </div>
-                        <div class="gantt-row">
-                            <strong>Design</strong>
-                            <i class="bar green" style="grid-column: 2 / 4"></i>
-                        </div>
-                        <div class="gantt-row">
-                            <strong>Backend</strong>
-                            <i class="bar amber" style="grid-column: 3 / 5"></i>
-                        </div>
-                        <div class="gantt-row">
-                            <strong>Publicacao</strong>
-                            <i class="bar slate" style="grid-column: 4 / 5"></i>
+                            <div class="preview-stats" aria-hidden="true">
+                                <div>
+                                    <span>Usuarios</span>
+                                    <strong>128</strong>
+                                </div>
+                                <div>
+                                    <span>Projetos</span>
+                                    <strong>34</strong>
+                                </div>
+                                <div>
+                                    <span>Alertas</span>
+                                    <strong>9</strong>
+                                </div>
+                            </div>
+
+                            <div class="timeline-panel" aria-hidden="true">
+                                <div class="timeline-head">
+                                    <span>Tarefa</span>
+                                    <span>Sem 1</span>
+                                    <span>Sem 2</span>
+                                    <span>Sem 3</span>
+                                </div>
+                                <div class="timeline-row">
+                                    <strong>Cadastro</strong>
+                                    <i class="bar blue" style="grid-column: 2 / 4"></i>
+                                </div>
+                                <div class="timeline-row">
+                                    <strong>Gantt</strong>
+                                    <i class="bar green" style="grid-column: 3 / 5"></i>
+                                </div>
+                                <div class="timeline-row">
+                                    <strong>Auditoria</strong>
+                                    <i class="bar amber" style="grid-column: 4 / 5"></i>
+                                </div>
+                            </div>
+
+                            <div class="alert-strip" aria-hidden="true">
+                                <span></span>
+                                <p>Prazo de projeto atualizado para os responsaveis.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -141,57 +162,33 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
             <div class="landing-wrap">
                 <div class="section-head">
                     <p class="eyebrow">Recursos</p>
-                    <h2>Um painel para sair do plano e acompanhar a entrega.</h2>
-                    <p>As areas principais do projeto ficam conectadas: cadastro, cronograma, usuarios, arquivos e auditoria.</p>
+                    <h2>O mesmo padrao visual do painel, desde a primeira tela.</h2>
+                    <p>O tema usa navegacao escura, azul primario, superficies claras e indicadores por estado para deixar a rotina administrativa mais previsivel.</p>
                 </div>
 
                 <div class="feature-grid">
                     <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                                <path d="M7 9h5"></path>
-                                <path d="M7 13h8"></path>
-                            </svg>
-                        </div>
-                        <h3>Projetos</h3>
-                        <p>Organize cada iniciativa com status, datas, responsaveis e arquivos relacionados.</p>
+                        <span class="feature-token">01</span>
+                        <h3>Projetos e Gantt</h3>
+                        <p>Crie projetos, defina prazos, acompanhe tarefas e veja o cronograma em uma linha de tempo objetiva.</p>
                     </article>
 
                     <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m9 11 2 2 4-5"></path>
-                                <rect x="4" y="4" width="16" height="16" rx="3"></rect>
-                            </svg>
-                        </div>
-                        <h3>Tarefas</h3>
-                        <p>Distribua trabalho com dependencias, duracao e progresso visivel para todo o time.</p>
+                        <span class="feature-token">02</span>
+                        <h3>Permissoes por empresa</h3>
+                        <p>Administrador master enxerga tudo; administradores de empresa ficam restritos aos proprios dados.</p>
                     </article>
 
                     <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="6" width="8" height="3" rx="1.5"></rect>
-                                <rect x="8" y="11" width="13" height="3" rx="1.5"></rect>
-                                <rect x="5" y="16" width="10" height="3" rx="1.5"></rect>
-                            </svg>
-                        </div>
-                        <h3>Gantt</h3>
-                        <p>Veja o cronograma em linha do tempo com etapas, marcos e pontos de atencao.</p>
+                        <span class="feature-token">03</span>
+                        <h3>Usuarios e documentos</h3>
+                        <p>Cadastro com CPF, e-mail corporativo e dados da empresa organizados para auditoria e manutencao.</p>
                     </article>
 
                     <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9.5" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                        </div>
-                        <h3>Equipe</h3>
-                        <p>Gerencie usuarios, papeis e permissoes por empresa sem misturar dados.</p>
+                        <span class="feature-token">04</span>
+                        <h3>Alertas operacionais</h3>
+                        <p>Informacoes importantes chegam ao usuario para reduzir esquecimentos e dependencias de comunicacao externa.</p>
                     </article>
                 </div>
             </div>
@@ -201,24 +198,24 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
             <div class="landing-wrap workflow">
                 <div class="section-head">
                     <p class="eyebrow">Fluxo</p>
-                    <h2>Da primeira tarefa ao acompanhamento diario.</h2>
+                    <h2>Do cadastro ao acompanhamento diario.</h2>
                 </div>
 
                 <div class="step-list">
                     <article>
                         <span>01</span>
-                        <h3>Crie o workspace</h3>
-                        <p>Cadastre a empresa, defina o administrador e prepare o ambiente para o time.</p>
+                        <h3>Cadastre a empresa</h3>
+                        <p>Defina CNPJ, dominio, administrador e regras de acesso antes de liberar a equipe.</p>
                     </article>
                     <article>
                         <span>02</span>
                         <h3>Monte o projeto</h3>
-                        <p>Adicione tarefas, datas e responsaveis para transformar o escopo em plano.</p>
+                        <p>Organize lider, responsaveis, prioridade, prazo, orcamento, arquivos e tarefas.</p>
                     </article>
                     <article>
                         <span>03</span>
-                        <h3>Acompanhe no Gantt</h3>
-                        <p>Revise a linha do tempo, ajuste dependencias e veja onde o projeto precisa de atencao.</p>
+                        <h3>Acompanhe e alerte</h3>
+                        <p>Use dashboard, Gantt e alertas para antecipar atrasos e manter o time informado.</p>
                     </article>
                 </div>
             </div>
@@ -229,8 +226,8 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
                 <div class="pricing-band">
                     <div>
                         <p class="eyebrow">Preco</p>
-                        <h2>Projeto organizado sem custo de plataforma.</h2>
-                        <p>Use no ambiente local ou em servidor proprio, com controle dos dados e liberdade para evoluir o sistema conforme o processo da empresa.</p>
+                        <h2>Ambiente livre para evoluir com o seu processo.</h2>
+                        <p>Execute em ambiente local ou servidor proprio, preservando o controle dos dados, deploy e futuras regras de negocio.</p>
                     </div>
                     <div class="price-grid">
                         <div>
@@ -238,12 +235,12 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
                             <span>Sem assinatura</span>
                         </div>
                         <div>
-                            <strong>∞</strong>
-                            <span>Projetos</span>
+                            <strong>Web</strong>
+                            <span>Acesso via painel</span>
                         </div>
                         <div>
-                            <strong>∞</strong>
-                            <span>Usuarios</span>
+                            <strong>API</strong>
+                            <span>Base para evolucao</span>
                         </div>
                     </div>
                 </div>
@@ -253,7 +250,7 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         <section class="section-band compact final-section">
             <div class="landing-wrap final-cta">
                 <p class="eyebrow">Comece agora</p>
-                <h2>Abra o Managect e coloque o cronograma para trabalhar.</h2>
+                <h2>Abra o painel e continue a rotina de projetos.</h2>
                 <a class="btn btn-primary" href="<?= $h($ctaHref) ?>">
                     <?= $h($ctaLabel) ?>
                     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -271,7 +268,7 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
                 <span class="brand-mark">M</span>
                 <span>Managect</span>
             </div>
-            <span>Gestao de projetos, tarefas e cronogramas.</span>
+            <span>Gestao de projetos, usuarios, empresas e cronogramas.</span>
         </div>
     </footer>
 
@@ -280,11 +277,11 @@ $h = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
             var selectors = [
                 '.hero-copy .eyebrow',
                 '.hero-copy h1',
+                '.hero-kicker',
                 '.hero-sub',
                 '.hero-actions',
                 '.hero-metrics div',
-                '.project-preview',
-                '.task-row',
+                '.workspace-preview',
                 '.section-head',
                 '.feature-card',
                 '.step-list article',
