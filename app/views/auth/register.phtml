@@ -3,34 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cadastro dev · Gestao de Projetos</title>
+    <title>Cadastro dev | Managect</title>
     <link rel="stylesheet" href="/assets/app.css">
     <link rel="stylesheet" href="/assets/auth.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2.min.css">
 </head>
 <body class="auth-body">
     <main class="auth-shell auth-shell-wide">
-        <section class="auth-visual auth-visual-compact" aria-label="Planejamento de tarefas">
+        <section class="auth-visual auth-visual-compact" aria-label="Cadastro de workspace Managect">
             <div class="auth-brand">
-                <span class="auth-brand-mark">P</span>
+                <span class="auth-brand-mark">M</span>
                 <div>
-                    <strong>Novo workspace</strong>
-                    <small>Ambiente de desenvolvimento</small>
+                    <strong>Managect</strong>
+                    <small>Novo workspace de desenvolvimento</small>
                 </div>
             </div>
 
             <div class="auth-kanban">
                 <div>
-                    <strong>Backlog</strong>
-                    <span>5</span>
+                    <strong>Empresa</strong>
+                    <span>01</span>
                 </div>
                 <div>
-                    <strong>Em andamento</strong>
-                    <span>3</span>
+                    <strong>Administrador</strong>
+                    <span>02</span>
                 </div>
                 <div>
-                    <strong>Concluido</strong>
-                    <span>12</span>
+                    <strong>Permissoes</strong>
+                    <span>03</span>
                 </div>
             </div>
 
@@ -45,8 +45,8 @@
 
         <section class="auth-panel auth-register-panel" aria-labelledby="register-title">
             <p class="eyebrow">Somente desenvolvimento</p>
-            <h1 id="register-title">Criar cadastro inicial</h1>
-            <p class="muted">Crie uma empresa de teste e o usuario administrador para acessar o sistema.</p>
+            <h1 id="register-title">Criar workspace inicial</h1>
+            <p class="muted">Cadastre uma empresa de teste e o administrador responsavel pelo primeiro acesso.</p>
 
             <div class="flash">
                 <?= $this->flashSession->output() ?>
@@ -58,7 +58,7 @@
 
                 <div class="auth-form-grid">
                     <div class="auth-field">
-                        <label for="company_name">Workspace</label>
+                        <label for="company_name">Empresa</label>
                         <input id="company_name" name="company_name" type="text"
                             autocomplete="organization" placeholder="Nexocore Tecnologia" required autofocus>
                     </div>
@@ -107,7 +107,7 @@
                     </div>
                 </div>
 
-                <button class="auth-submit" type="submit">Criar ambiente</button>
+                <button class="auth-submit" type="submit">Criar workspace</button>
             </form>
 
             <p class="auth-alt">

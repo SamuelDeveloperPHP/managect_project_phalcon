@@ -3,50 +3,50 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Entrar · Gestao de Projetos</title>
+    <title>Entrar | Managect</title>
     <link rel="stylesheet" href="/assets/app.css">
     <link rel="stylesheet" href="/assets/auth.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2.min.css">
 </head>
 <body class="auth-body">
     <main class="auth-shell">
-        <section class="auth-visual" aria-label="Painel de projetos">
+        <section class="auth-visual" aria-label="Painel Managect">
             <div class="auth-brand">
-                <span class="auth-brand-mark">P</span>
+                <span class="auth-brand-mark">M</span>
                 <div>
-                    <strong>Project Flow</strong>
-                    <small>Projetos, tarefas e cronogramas</small>
+                    <strong>Managect</strong>
+                    <small>Projetos, empresas e cronogramas</small>
                 </div>
             </div>
 
             <div class="auth-board">
                 <div class="auth-board-head">
                     <div>
-                        <span class="auth-kicker">Sprint atual</span>
-                        <strong>Implantacao do portal</strong>
+                        <span class="auth-kicker">Acesso administrativo</span>
+                        <strong>Empresa Principal</strong>
                     </div>
-                    <span class="auth-status">68%</span>
+                    <span class="auth-status">Online</span>
                 </div>
 
                 <div class="auth-progress">
-                    <span style="width: 68%"></span>
+                    <span style="width: 72%"></span>
                 </div>
 
                 <div class="auth-task-list">
                     <div class="auth-task done">
                         <span></span>
-                        <p>Briefing aprovado</p>
-                        <small>Concluido</small>
+                        <p>Permissoes verificadas</p>
+                        <small>Seguro</small>
                     </div>
                     <div class="auth-task active">
                         <span></span>
-                        <p>Gantt revisado</p>
-                        <small>Hoje</small>
+                        <p>Projetos e Gantt</p>
+                        <small>Ativo</small>
                     </div>
                     <div class="auth-task">
                         <span></span>
-                        <p>Publicacao assistida</p>
-                        <small>Proximo</small>
+                        <p>Alertas da equipe</p>
+                        <small>Fila</small>
                     </div>
                 </div>
 
@@ -64,8 +64,8 @@
 
         <section class="auth-panel" aria-labelledby="login-title">
             <p class="eyebrow">Acesso seguro</p>
-            <h1 id="login-title">Entrar no ambiente</h1>
-            <p class="muted">Acompanhe projetos, responsaveis, prazos e tarefas do seu workspace.</p>
+            <h1 id="login-title">Entrar no Managect</h1>
+            <p class="muted">Acesse empresas, projetos, responsaveis, prazos e tarefas conforme o seu perfil.</p>
 
             <div class="flash">
                 <?= $this->flashSession->output() ?>
@@ -97,7 +97,7 @@
                 </p>
             <?php endif; ?>
 
-            <p class="auth-alt" style="margin-top:16px;font-size:12px;opacity:.85;">
+            <p class="auth-legal">
                 Ao entrar, você concorda com os <a href="/termos">Termos de Uso</a> e a <a href="/privacidade">Política de Privacidade</a>.
             </p>
         </section>
