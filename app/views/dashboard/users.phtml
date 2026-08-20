@@ -133,15 +133,15 @@
                     <option v-if="isMaster" value="master">Master</option>
                 </select>
 
-                <div v-if="form.role === 'user'" style="margin: 14px 0; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                    <label style="font-weight: bold; margin-bottom: 8px; display: block; color: #334155;">Permissões do Usuário</label>
+                <div v-if="form.role === 'user'" class="permission-box">
+                    <label>Permissões do Usuário</label>
                     
-                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-weight: normal; cursor: pointer;">
+                    <label>
                         <input type="checkbox" v-model="form.permissions.can_manage_projects">
                         Criar & Editar Projetos / Gantt
                     </label>
 
-                    <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                    <label>
                         <input type="checkbox" v-model="form.permissions.can_view_reports">
                         Visualizar Relatórios do Dashboard
                     </label>

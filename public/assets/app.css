@@ -6,9 +6,12 @@
     --ink: #0f172a;
     --muted: #64748b;
     --line: #e2e8f0;
+    --line-strong: #cbd5e1;
     --nav: #101827;
+    --nav-soft: #172033;
     --primary: #2563eb;
     --primary-dark: #1d4ed8;
+    --primary-soft: #dbeafe;
     --green: #059669;
     --green-soft: #dcfce7;
     --amber: #d97706;
@@ -17,6 +20,8 @@
     --red-soft: #fee2e2;
     --blue-soft: #dbeafe;
     --shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 24px 70px rgba(15, 23, 42, 0.16);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--ink);
     background: var(--bg);
@@ -53,7 +58,11 @@ a {
 }
 
 .admin-shell {
-    background: var(--bg);
+    background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+        var(--bg);
+    background-size: 42px 42px;
 }
 
 .topbar {
@@ -63,18 +72,19 @@ a {
     right: 0;
     left: 0;
     display: flex;
-    min-height: 60px;
+    min-height: 64px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 24px;
     color: #fff;
     background: var(--nav);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.16);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.22);
 }
 
 .topbar-brand,
 .topbar-user {
     display: flex;
+    min-width: 0;
     align-items: center;
     gap: 10px;
 }
@@ -92,6 +102,20 @@ a {
     margin-top: 3px;
     color: #cbd5e1;
     font-size: .72rem;
+}
+
+.topbar-brand > div,
+.topbar-user > div {
+    min-width: 0;
+}
+
+.topbar-brand strong,
+.topbar-user strong,
+.topbar-brand small,
+.topbar-user small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .brand-mark,
@@ -113,19 +137,31 @@ a {
     background: #fff;
 }
 
+.company-logo {
+    display: block;
+    max-width: 150px;
+    max-height: 38px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #fff;
+    padding: 4px;
+}
+
 .sidebar {
     position: fixed;
     z-index: 20;
-    top: 60px;
+    top: 64px;
     bottom: 0;
     left: 0;
     display: flex;
     width: 240px;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px 16px;
+    padding: 22px 16px;
     background: var(--surface);
     border-right: 1px solid var(--line);
+    box-shadow: 1px 0 0 rgba(15, 23, 42, 0.02);
 }
 
 .nav-label {
@@ -141,23 +177,24 @@ a {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 4px;
-    padding: 9px 10px;
+    margin-bottom: 6px;
+    padding: 10px;
     color: #334155;
     border-radius: 8px;
     text-decoration: none;
-    transition: background .16s ease, color .16s ease, transform .16s ease;
+    transition: background .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
 }
 
 .nav-item:hover {
     color: var(--ink);
     background: var(--surface-soft);
+    transform: translateX(1px);
 }
 
 .nav-item.active {
     color: #fff;
     background: var(--primary);
-    box-shadow: none;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.16);
 }
 
 .nav-icon {
@@ -185,7 +222,7 @@ a {
 
 .admin-content {
     margin-left: 240px;
-    padding: 84px 28px 28px;
+    padding: 88px 28px 28px;
 }
 
 .footer {
@@ -224,7 +261,9 @@ a {
     padding: 18px 20px;
     border: 1px solid var(--line);
     border-radius: 8px;
-    background: #fff;
+    background:
+        linear-gradient(135deg, rgba(219, 234, 254, 0.58), rgba(255, 255, 255, 0) 42%),
+        #fff;
     box-shadow: var(--shadow);
 }
 
@@ -288,7 +327,7 @@ textarea {
     min-height: 36px;
     padding: 8px 10px;
     color: var(--ink);
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--line-strong);
     border-radius: 8px;
     background: #fff;
     font: inherit;
@@ -317,12 +356,12 @@ button,
     gap: 8px;
     padding: 8px 12px;
     border: 0;
-    border-radius: 6px;
+    border-radius: 8px;
     color: #fff;
     background: var(--primary);
     font: inherit;
     font-size: .9rem;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1;
     text-decoration: none;
     cursor: pointer;
@@ -333,7 +372,8 @@ button:hover,
 .btn:hover,
 .button-link:hover {
     background: var(--primary-dark);
-    box-shadow: none;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.14);
+    transform: translateY(-1px);
 }
 
 .btn-sm {
@@ -353,6 +393,7 @@ form>button {
 
 .btn-secondary {
     color: var(--ink);
+    border: 1px solid var(--line);
     background: #eef2ff;
 }
 
@@ -403,6 +444,7 @@ form>button {
     display: flex;
     gap: 14px;
     padding: 18px;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
 }
 
 .metric-link {
@@ -413,6 +455,7 @@ form>button {
 .metric-link:hover {
     border-color: rgba(37, 99, 235, 0.42);
     box-shadow: 0 16px 36px rgba(37, 99, 235, 0.13);
+    transform: translateY(-2px);
 }
 
 .metric-card strong {
@@ -534,6 +577,9 @@ form>button {
 
 .table-wrap {
     overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
 }
 
 table {
@@ -551,11 +597,15 @@ td {
 
 th {
     color: var(--muted);
-    background: var(--surface-soft);
+    background: #f8fafc;
     font-size: .78rem;
     font-weight: 900;
     letter-spacing: .08em;
     text-transform: uppercase;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
 }
 
 td small {
@@ -668,6 +718,13 @@ td small {
     border-radius: 8px;
     background: var(--surface);
     box-shadow: var(--shadow);
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.project-card:hover {
+    border-color: rgba(37, 99, 235, 0.32);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .project-cover {
@@ -788,7 +845,7 @@ td small {
 }
 
 .progress-track {
-    height: 5px;
+    height: 6px;
     margin-top: 6px;
     overflow: hidden;
     border-radius: 999px;
@@ -807,6 +864,41 @@ td small {
     justify-content: flex-end;
     gap: 6px;
     margin-top: 12px;
+}
+
+.permission-box {
+    margin: 14px 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-soft);
+}
+
+.permission-box > label:first-child {
+    margin: 0 0 8px;
+    color: #334155;
+    font-weight: 900;
+}
+
+.permission-box label:not(:first-child) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px;
+    color: #334155;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.permission-box label:last-child {
+    margin-bottom: 0;
+}
+
+.permission-box input[type="checkbox"] {
+    width: 18px;
+    min-height: 18px;
+    flex: 0 0 18px;
 }
 
 .project-form {
@@ -1017,6 +1109,75 @@ td small {
     padding-top: 3px;
 }
 
+.company-hero {
+    align-items: center;
+}
+
+.company-logo-preview {
+    display: block;
+    max-width: 168px;
+    max-height: 56px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    object-fit: contain;
+    padding: 6px;
+}
+
+.company-profile-form {
+    display: grid;
+    gap: 12px;
+}
+
+.company-section {
+    min-width: 0;
+}
+
+.company-form-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.company-form-grid.two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.company-form-grid.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.company-form-grid.address {
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+}
+
+.field-span-2 {
+    grid-column: span 2;
+}
+
+.lookup-field {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.lookup-field input {
+    min-width: 0;
+}
+
+.lookup-field .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.state-field input {
+    text-transform: uppercase;
+}
+
+.company-actions {
+    padding: 16px 0 0;
+    border-top: 1px solid var(--line);
+}
+
 .gantt-page {
     height: 100vh;
     min-height: 100vh;
@@ -1191,8 +1352,15 @@ td small {
     .content-grid,
     .projects-grid,
     .form-grid,
-    .project-form-layout {
+    .project-form-layout,
+    .company-form-grid.two,
+    .company-form-grid.three,
+    .company-form-grid.address {
         grid-template-columns: 1fr;
+    }
+
+    .field-span-2 {
+        grid-column: auto;
     }
 }
 
@@ -1236,7 +1404,8 @@ td small {
     .page-hero,
     .toolbar,
     .modal-actions,
-    .form-actions {
+    .form-actions,
+    .lookup-field {
         align-items: stretch;
         flex-direction: column;
     }
@@ -1251,6 +1420,10 @@ td small {
 
     .row-actions {
         min-width: 300px;
+    }
+
+    .company-logo-preview {
+        max-width: 100%;
     }
 
     .project-actions {
@@ -1283,6 +1456,13 @@ td small {
         width: 100%;
         padding-top: 12px;
         border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .topbar-brand strong,
+    .topbar-user strong,
+    .topbar-brand small,
+    .topbar-user small {
+        white-space: normal;
     }
 
     .profile-list {
