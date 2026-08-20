@@ -13,6 +13,16 @@ return static function (): Router {
         'action' => 'index',
     ])->setName('home');
 
+    $router->addGet('/healthz', [
+        'controller' => 'health',
+        'action' => 'health',
+    ])->setName('health');
+
+    $router->addGet('/readyz', [
+        'controller' => 'health',
+        'action' => 'ready',
+    ])->setName('ready');
+
     $router->addGet('/login', [
         'controller' => 'auth',
         'action' => 'login',

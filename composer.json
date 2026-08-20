@@ -16,8 +16,11 @@
         }
     },
     "scripts": {
+        "lint": "php bin/lint.php",
         "migrate": "php bin/migrate.php",
-        "seed": "php bin/seed.php"
+        "production:check": "php bin/production_check.php",
+        "seed": "php bin/seed.php",
+        "smoke": "php bin/smoke.php"
     },
     "config": {
         "sort-packages": true

@@ -52,13 +52,15 @@ cd managect_project_phalcon
 gcloud builds submit --config cloudbuild.yaml .
 ```
 
-Ao terminar, a imagem estara publicada em:
+Ao terminar, a imagem estara publicada em duas tags:
 
 ```text
 southamerica-east1-docker.pkg.dev/SEU_PROJETO/phalcon/app:latest
+southamerica-east1-docker.pkg.dev/SEU_PROJETO/phalcon/app:SHORT_SHA
 ```
 
-Guarde esse caminho — vai no `.env` da VM como `APP_IMAGE`. Para descobrir o ID do
+Para homologacao/producao, use preferencialmente a tag `SHORT_SHA` no `.env` da
+VM como `APP_IMAGE`; isso deixa rollback rastreavel. Para descobrir o ID do
 projeto: `gcloud config get-value project`.
 
 ---
@@ -154,6 +156,7 @@ Ajuste:
 
 ```env
 APP_ENV=production
+APP_URL=https://seudominio.com.br
 
 DB_PASSWORD=<senha_forte_do_banco>
 MYSQL_ROOT_PASSWORD=<outra_senha_forte>
@@ -169,8 +172,25 @@ MASTER_PASSWORD=<senha_forte_do_master>
 DOMAIN=seudominio.com.br
 ACME_EMAIL=voce@seudominio.com.br
 
-# caminho da imagem publicada na Parte A (troque SEU_PROJETO)
-APP_IMAGE=southamerica-east1-docker.pkg.dev/SEU_PROJETO/phalcon/app:latest
+# Dados legais exibidos nos Termos e na Politica de Privacidade
+LEGAL_APP_URL=https://seudominio.com.br
+LEGAL_COMPANY_NAME=NexoCore Tecnologia LTDA
+LEGAL_COMPANY_CNPJ=<CNPJ real>
+LEGAL_FORUM=<Cidade/UF>
+LEGAL_CONTACT_EMAIL=contato@seudominio.com.br
+LEGAL_PRIVACY_EMAIL=privacidade@seudominio.com.br
+LEGAL_HOSTING_REGION=Google Cloud southamerica-east1
+LEGAL_UPDATED_AT=<data da homologacao>
+
+# caminho da imagem publicada na Parte A (troque SEU_PROJETO e use SHORT_SHA)
+APP_IMAGE=southamerica-east1-docker.pkg.dev/SEU_PROJETO/phalcon/app:SHORT_SHA
+```
+
+Antes de subir, valide se o Compose consegue interpolar todas as variaveis
+obrigatorias:
+
+```bash
+docker compose -f compose.prod.yaml config >/tmp/managect-compose-check.yaml
 ```
 
 ### D.4 Autenticar o Docker no Artifact Registry
@@ -206,9 +226,10 @@ docker compose -f compose.prod.yaml logs -f caddy
 docker compose -f compose.prod.yaml exec app composer install --no-dev --optimize-autoloader
 docker compose -f compose.prod.yaml exec app composer migrate
 docker compose -f compose.prod.yaml exec app composer seed   # opcional: cria o admin
+docker compose -f compose.prod.yaml exec app composer production:check
 ```
 
-### D.7 Testar
+### D.7 Testar e homologar
 
 ```text
 https://seudominio.com.br
@@ -216,6 +237,22 @@ https://seudominio.com.br
 
 O cadeado de HTTPS aparece sozinho. Login em `/login` com `ADMIN_EMAIL` /
 `ADMIN_PASSWORD` do `.env`.
+
+Execute os gates minimos de homologacao:
+
+```bash
+docker compose -f compose.prod.yaml ps
+docker compose -f compose.prod.yaml exec app composer smoke
+curl -fsS https://seudominio.com.br/healthz
+curl -fsS https://seudominio.com.br/readyz
+```
+
+Resultado esperado:
+
+- `app`, `mysql` e `redis` saudaveis no `docker compose ps`.
+- `/healthz` retorna `{"status":"ok" ...}`.
+- `/readyz` retorna `{"status":"ready" ...}`.
+- `composer smoke` termina com `Smoke test OK`.
 
 ---
 
@@ -243,7 +280,28 @@ gcloud builds submit --config cloudbuild.yaml .
 # depois, na VM
 docker compose -f compose.prod.yaml pull
 docker compose -f compose.prod.yaml up -d
+docker compose -f compose.prod.yaml exec app composer migrate
+docker compose -f compose.prod.yaml exec app composer production:check
+docker compose -f compose.prod.yaml exec app composer smoke
 ```
+
+---
+
+## Rollback
+
+Use tags imutaveis do Cloud Build. Se a homologacao falhar, volte o `APP_IMAGE`
+no `.env` para a tag `SHORT_SHA` anterior e suba novamente:
+
+```bash
+nano .env
+docker compose -f compose.prod.yaml pull app
+docker compose -f compose.prod.yaml up -d
+docker compose -f compose.prod.yaml exec app composer smoke
+```
+
+Rollback de banco so e seguro quando a migration aplicada for reversivel ou
+quando houver backup testado. Antes de migrations em producao, faca snapshot do
+disco/backup do MySQL e registre a tag anterior do `APP_IMAGE`.
 
 ---
 

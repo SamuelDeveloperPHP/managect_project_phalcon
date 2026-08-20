@@ -216,6 +216,24 @@ docker compose logs -f redis
 
 ## Comandos uteis
 
+Validar sintaxe PHP do projeto:
+
+```powershell
+docker compose exec app composer lint
+```
+
+Executar smoke test HTTP local:
+
+```powershell
+docker compose exec app composer smoke
+```
+
+Validar variaveis obrigatorias antes de homologacao/producao:
+
+```powershell
+docker compose -f compose.prod.yaml exec app composer production:check
+```
+
 Parar o ambiente:
 
 ```powershell
@@ -256,6 +274,7 @@ docker compose exec app composer dump-autoload
 ## Observacoes
 
 - O projeto usa Apache na porta local `8080`.
+- Endpoints de operacao: `/healthz` para liveness e `/readyz` para readiness de banco/Redis.
 - O phpMyAdmin usa a porta local `8081`.
 - O MySQL esta exposto no Windows pela porta `3307`.
 - O Redis esta exposto na porta `6379`.
