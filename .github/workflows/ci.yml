@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex-*'
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Validate composer
+        run: composer validate --strict --no-check-lock
+
+      - name: Lint PHP
+        run: php bin/lint.php
+
+      - name: Validate production checklist script
+        run: php bin/production_check.php
+        env:
+          APP_ENV: production
+          APP_URL: https://homologacao.example.com
+          DB_HOST: mysql
+          DB_PASSWORD: StrongDbPass123
+          MYSQL_ROOT_PASSWORD: StrongRootPass123
+          ADMIN_EMAIL: admin@example.com
+          ADMIN_PASSWORD: StrongAdminPass123
+          MASTER_NAME: Administrador Master
+          MASTER_EMAIL: master@example.com
+          MASTER_PASSWORD: StrongMasterPass123
+          REDIS_HOST: redis
+          DOMAIN: homologacao.example.com
+          ACME_EMAIL: ops@example.com
+          APP_IMAGE: southamerica-east1-docker.pkg.dev/projeto/phalcon/app:latest
+          LEGAL_APP_URL: https://homologacao.example.com
+          LEGAL_COMPANY_NAME: NexoCore Tecnologia LTDA
+          LEGAL_COMPANY_CNPJ: 11.222.333/0001-81
+          LEGAL_FORUM: Sao Paulo/SP
+          LEGAL_CONTACT_EMAIL: contato@example.com
+          LEGAL_PRIVACY_EMAIL: privacidade@example.com
+          LEGAL_HOSTING_REGION: Google Cloud southamerica-east1
+          LEGAL_UPDATED_AT: 20 de agosto de 2026
