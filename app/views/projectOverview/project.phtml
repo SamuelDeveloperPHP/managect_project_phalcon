@@ -1,0 +1,97 @@
+<?php $this->partial('header', ['pageTitle' => $pageTitle, 'csrfToken' => $csrfToken]); ?>
+<?php $this->partial('navbar', ['auth' => $auth]); ?>
+<?php $this->partial('sidebar', ['auth' => $auth, 'csrfToken' => $csrfToken, 'currentPage' => 'projects']); ?>
+
+<?php
+$statusClasses = [
+    'STATUS_DONE' => 'status-success',
+    'STATUS_ACTIVE' => 'status-info',
+    'STATUS_WAITING' => 'status-muted',
+    'STATUS_SUSPENDED' => 'status-warning',
+    'STATUS_FAILED' => 'status-danger',
+    'STATUS_UNDEFINED' => 'status-muted',
+];
+$date = static fn (?DateTimeInterface $value): string => $value ? $value->format('d/m/Y') : 'Não definido';
+?>
+
+<main class="admin-content project-overview" data-project-id="<?= (int) $project->id ?>">
+    <section class="page-hero compact-hero overview-hero">
+        <div>
+            <p class="eyebrow">Visão geral do projeto</p>
+            <h1><?= htmlspecialchars((string) $project->name, ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="muted">
+                <?= htmlspecialchars((string) ($project->code ?: 'Sem código'), ENT_QUOTES, 'UTF-8') ?>
+                · <?= $date($summary['starts_at']) ?> a <?= $date($summary['ends_at']) ?>
+                <?php if (($auth['role'] ?? '') === 'master' && $project->company): ?>
+                    · <?= htmlspecialchars((string) $project->company->name, ENT_QUOTES, 'UTF-8') ?>
+                <?php endif; ?>
+            </p>
+        </div>
+        <div class="overview-actions">
+            <a class="btn btn-secondary btn-sm" href="/projects">Projetos</a>
+            <a class="btn btn-primary btn-sm" href="/projects/<?= (int) $project->id ?>/gantt" target="_blank" rel="noopener">Abrir Gantt</a>
+        </div>
+    </section>
+
+    <section class="overview-metrics" aria-label="Indicadores do projeto">
+        <article class="panel overview-metric"><span>Progresso</span><strong><?= $summary['progress'] ?>%</strong><div class="progress-track"><span style="width: <?= $summary['progress'] ?>%"></span></div></article>
+        <article class="panel overview-metric"><span>Entregas concluídas</span><strong><?= $summary['completed'] ?>/<?= $summary['total'] ?></strong><small>Tarefas finais do cronograma</small></article>
+        <article class="panel overview-metric"><span>Com prazo nesta semana</span><strong><?= $summary['due_soon'] ?></strong><small>Ainda não concluídas</small></article>
+        <article class="panel overview-metric <?= $summary['late'] > 0 ? 'metric-alert' : '' ?>"><span>Em atraso</span><strong><?= $summary['late'] ?></strong><small><?= $summary['late'] > 0 ? 'Exigem atenção' : 'Nenhuma pendência vencida' ?></small></article>
+    </section>
+
+    <section class="overview-grid">
+        <article class="panel overview-panel">
+            <div class="panel-header"><div><p class="eyebrow">Andamento</p><h2>Distribuição das tarefas</h2></div></div>
+            <div class="status-distribution">
+                <?php foreach ($summary['status_labels'] as $status => $label): ?>
+                    <?php $count = (int) ($summary['status_counts'][$status] ?? 0); $percent = $summary['total'] > 0 ? (int) round(($count * 100) / $summary['total']) : 0; ?>
+                    <div class="status-row">
+                        <span><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></span><strong><?= $count ?></strong>
+                        <div class="status-bar <?= htmlspecialchars(strtolower(str_replace('STATUS_', '', $status)), ENT_QUOTES, 'UTF-8') ?>"><i style="width: <?= $percent ?>%"></i></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </article>
+
+        <article class="panel overview-panel">
+            <div class="panel-header"><div><p class="eyebrow">Próximos prazos</p><h2>Entregas pendentes</h2></div></div>
+            <?php if ($summary['upcoming'] === []): ?>
+                <p class="empty-state">Não há entregas pendentes com prazo futuro.</p>
+            <?php else: ?>
+                <ul class="upcoming-list">
+                    <?php foreach ($summary['upcoming'] as $task): ?>
+                        <li><div><strong><?= htmlspecialchars((string) $task->name, ENT_QUOTES, 'UTF-8') ?></strong><small><?= htmlspecialchars((string) ($task->code ?: 'Sem código'), ENT_QUOTES, 'UTF-8') ?></small></div><time><?= (new DateTimeImmutable((string) $task->end_at))->format('d/m/Y') ?></time></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </article>
+    </section>
+
+    <section class="panel overview-panel phase-panel">
+        <div class="panel-header"><div><p class="eyebrow">Fases</p><h2>Avanço por frente de trabalho</h2></div></div>
+        <?php if ($summary['phases'] === []): ?>
+            <p class="empty-state">Cadastre tarefas no Gantt para acompanhar as fases.</p>
+        <?php else: ?>
+            <div class="table-wrap"><table><thead><tr><th>Fase</th><th>Concluídas</th><th>Progresso</th></tr></thead><tbody>
+                <?php foreach ($summary['phases'] as $phase): ?>
+                    <tr><td><strong><?= htmlspecialchars($phase['name'], ENT_QUOTES, 'UTF-8') ?></strong><small><?= htmlspecialchars($phase['code'], ENT_QUOTES, 'UTF-8') ?></small></td><td><?= $phase['done'] ?>/<?= $phase['total'] ?></td><td class="phase-progress"><strong><?= $phase['progress'] ?>%</strong><div class="progress-track"><span style="width: <?= $phase['progress'] ?>%"></span></div></td></tr>
+                <?php endforeach; ?>
+            </tbody></table></div>
+        <?php endif; ?>
+    </section>
+
+    <section class="panel overview-panel task-panel">
+        <div class="panel-header overview-task-header"><div><p class="eyebrow">Detalhamento</p><h2>Tarefas do projeto</h2></div><div class="overview-filters"><input id="overview-search" type="search" placeholder="Buscar tarefa ou código"><select id="overview-status"><option value="">Todos os status</option><?php foreach ($summary['status_labels'] as $status => $label): ?><option value="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select></div></div>
+        <div class="table-wrap"><table id="overview-tasks"><thead><tr><th>Código</th><th>Tarefa</th><th>Status</th><th>Progresso</th><th>Prazo</th></tr></thead><tbody>
+            <?php foreach ($summary['tasks'] as $task): ?>
+                <?php $status = (string) $task->status; ?>
+                <tr data-status="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><td><?= htmlspecialchars((string) ($task->code ?: '—'), ENT_QUOTES, 'UTF-8') ?></td><td><strong><?= htmlspecialchars((string) $task->name, ENT_QUOTES, 'UTF-8') ?></strong><?php if ($task->description): ?><small><?= htmlspecialchars((string) $task->description, ENT_QUOTES, 'UTF-8') ?></small><?php endif; ?></td><td><span class="status-pill <?= $statusClasses[$status] ?? 'status-muted' ?>"><?= htmlspecialchars($summary['status_labels'][$status] ?? $status, ENT_QUOTES, 'UTF-8') ?></span></td><td><?= max(0, min(100, (int) $task->progress)) ?>%</td><td><?= (new DateTimeImmutable((string) $task->end_at))->format('d/m/Y') ?></td></tr>
+            <?php endforeach; ?>
+        </tbody></table></div>
+        <p id="overview-empty" class="empty-state" hidden>Nenhuma tarefa corresponde aos filtros.</p>
+    </section>
+</main>
+
+<script src="/assets/project-overview.js"></script>
+<?php $this->partial('footer'); ?>

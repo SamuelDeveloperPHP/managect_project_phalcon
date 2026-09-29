@@ -60,6 +60,7 @@ return static function (): Router {
     $router->addGet('/projects/{id:[0-9]+}/edit', ['controller' => 'projects', 'action' => 'edit']);
     $router->addPost('/projects/{id:[0-9]+}', ['controller' => 'projects', 'action' => 'update']);
     $router->addPost('/projects/{id:[0-9]+}/delete', ['controller' => 'projects', 'action' => 'delete']);
+    $router->addGet('/projects/{id:[0-9]+}/overview', ['controller' => 'projectOverview', 'action' => 'project']);
     $router->addGet('/projects/{id:[0-9]+}/gantt', ['controller' => 'gantt', 'action' => 'project']);
     $router->addGet('/api/projects/{id:[0-9]+}/gantt', ['controller' => 'ganttApi', 'action' => 'index']);
     $router->addPost('/api/projects/{id:[0-9]+}/gantt', ['controller' => 'ganttApi', 'action' => 'save']);
