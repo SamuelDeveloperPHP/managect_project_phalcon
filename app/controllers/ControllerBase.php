@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Company;
+use App\Models\ReleaseVersion;
 use App\Models\User;
 use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Dispatcher;
@@ -90,7 +91,24 @@ abstract class ControllerBase extends Controller
             'permissions' => $user->getPermissionsArray(),
         ]);
 
+        $this->view->setVar('releaseVersion', $this->latestReleaseVersion());
+
         return true;
+    }
+
+    private function latestReleaseVersion(): ?ReleaseVersion
+    {
+        try {
+            $release = ReleaseVersion::findFirst([
+                'order' => 'released_at DESC, id DESC',
+            ]);
+
+            return $release instanceof ReleaseVersion ? $release : null;
+        } catch (Throwable) {
+            // Durante uma implantação, o código pode iniciar antes da migration.
+            // O rodapé permanece disponível e passa a exibir a versão após a migration.
+            return null;
+        }
     }
 
     protected function currentCompanyId(): int

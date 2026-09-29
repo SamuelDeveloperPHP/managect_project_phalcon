@@ -20,6 +20,8 @@
         "migrate": "php bin/migrate.php",
         "production:check": "php bin/production_check.php",
         "seed": "php bin/seed.php",
+        "release:register": "php bin/register_release.php",
+        "release:import-history": "php bin/import_release_history.php",
         "smoke": "php bin/smoke.php"
     },
     "config": {

@@ -72,6 +72,7 @@ return static function (): Router {
     $router->addPost('/api/users/{id:[0-9]+}/unblock', ['controller' => 'usersApi', 'action' => 'unblock']);
     $router->addDelete('/api/users/{id:[0-9]+}', ['controller' => 'usersApi', 'action' => 'delete']);
     $router->addGet('/api/audits', ['controller' => 'usersApi', 'action' => 'audits']);
+    $router->addGet('/versions', ['controller' => 'versions', 'action' => 'index']);
 
     // Multi-tenant Company Profile & Auto-lookup Routes
     $router->addGet('/companies/profile', ['controller' => 'companies', 'action' => 'profile']);

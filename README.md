@@ -58,6 +58,30 @@ Tambem existe o seed de empresa ficticia:
 docker compose exec app php bin/seed_fictitious_company.php
 ```
 
+## Registro de versões
+
+Após publicar uma branch, registre o commit e o responsável. O comando descobre
+a branch e o hash atuais automaticamente e os mostra no rodapé do sistema:
+
+```powershell
+docker compose exec -e RELEASE_EXECUTED_BY="Seu nome" app composer release:register
+```
+
+Para descrever a publicação no Histórico de Melhorias, separe itens da mesma
+categoria por `|`:
+
+```powershell
+docker compose exec -e RELEASE_EXECUTED_BY="Seu nome" app composer release:register -- --implemented="Visão geral por projeto" --fixed="Correção do cálculo de prazo" --updated="Rodapé fixo"
+```
+
+Para importar o histórico da branch principal no Histórico de Melhorias, após
+sincronizar com o GitHub, execute (o limite máximo é 50 commits):
+
+```powershell
+git fetch origin --prune
+docker compose exec app composer release:import-history
+```
+
 ## URLs locais
 
 Aplicacao:

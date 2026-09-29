@@ -22,6 +22,11 @@
                 <span class="nav-icon">E</span>
                 <span>Dados da Empresa</span>
             </a>
+
+            <a class="nav-item <?= ($currentPage ?? '') === 'versions' ? 'active' : '' ?>" href="/versions">
+                <span class="nav-icon">V</span>
+                <span>Versões</span>
+            </a>
         <?php endif; ?>
     </nav>
 
